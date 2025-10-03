@@ -1,283 +1,217 @@
-# PageSpeed Insights & CrUX History Report Generator
+# Azion PageSpeed Analyzer
 
-This tool generates comprehensive performance and security reports for websites using Google's PageSpeed Insights API and Chrome UX Report (CrUX) History API.
+A marketing-focused performance analysis tool that maps PageSpeed Insights recommendations to **Azion Platform solutions** for generating targeted marketing campaigns.
 
-## Features
+## 🎯 Main Goals
 
-- 📊 Analyzes both mobile and desktop performance
-- 📈 **NEW: CrUX History data with interactive time-series visualizations**
-- 🎨 Generates beautiful, user-friendly HTML reports
-- 📄 Exports raw data in JSON format
-- 🔍 Provides detailed recommendations for improvement
-- ⚡ Shows key performance metrics (FCP, LCP, CLS, INP, TTFB, etc.)
-- 🎯 Includes scores for Performance, SEO, Accessibility, and Best Practices
-- 📉 **NEW: Historical trends showing up to 40 weeks of real user data**
-- 🎭 **NEW: Interactive Plotly charts with distribution graphs**
+- **Interactive CLI** and argument-based usage
+- **Map performance issues** to specific Azion Platform solutions  
+- **Generate unified HTML reports** with Azion recommendations
+- **Output structured JSON** for marketing campaign generation
+- **Robust error handling** with best-effort approach
+- **Integrate CrUX History** with PageSpeed Insights data
 
-## Prerequisites
+## 🚀 Features
 
-1. **Python 3.6 or higher**
-2. **A Google Cloud Platform (GCP) account** with the PageSpeed Insights API enabled
-3. **A PageSpeed Insights API key**
+### ✅ **Completed Core Features**
 
-## Getting Your API Key
+1. **Interactive CLI Interface**
+   - Guided setup for non-technical users
+   - Argument-based usage for automation
+   - Device selection (mobile/desktop/tablet)
+   - CrUX integration options
 
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select an existing one
-3. Enable the required APIs:
-   - Navigate to "APIs & Services" > "Library"
-   - Search for "PageSpeed Insights API" and click "Enable"
-   - Search for "Chrome UX Report API" and click "Enable" (for CrUX History features)
-4. Create credentials:
-   - Go to "APIs & Services" > "Credentials"
-   - Click "Create Credentials" > "API Key"
-   - Copy your API key
+2. **Azion Platform Solution Mapping**
+   - Maps 40+ PageSpeed audit types to Azion solutions
+   - Prioritizes recommendations (high/medium/low)
+   - Covers Edge Cache, Image Processor, WAF, Edge Functions, etc.
 
-**Note**: The same API key works for both PageSpeed Insights and CrUX History APIs.
+3. **Unified HTML Reports**
+   - Single comprehensive report file
+   - Azion-branded styling with marketing focus
+   - Core Web Vitals timeline (when CrUX available)
+   - Actionable Azion solution recommendations
 
-## Setup
+4. **Marketing Campaign JSON Output**
+   - Structured issue → solution mappings
+   - Executive summary with impact metrics
+   - Solution highlights and value propositions
+   - Ready for LLM-based campaign generation
 
-1. **Install the required packages:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+5. **Robust Error Handling**
+   - Continues processing when CrUX data unavailable
+   - Graceful API failure handling
+   - Best-effort approach to maximize output
 
-2. **Set your PageSpeed Insights API key as an environment variable:**
+## 📁 Project Structure
 
-   **On macOS/Linux:**
-   ```bash
-   export PAGESPEED_INSIGHTS_API_KEY='your-api-key-here'
-   ```
-
-   **On Windows (Command Prompt):**
-   ```cmd
-   set PAGESPEED_INSIGHTS_API_KEY=your-api-key-here
-   ```
-
-   **On Windows (PowerShell):**
-   ```powershell
-   $env:PAGESPEED_INSIGHTS_API_KEY='your-api-key-here'
-   ```
-
-   **To make it permanent (macOS/Linux):**
-   Add the export command to your `~/.bashrc`, `~/.zshrc`, or `~/.bash_profile`
-
-## Usage
-
-The script uses **command-line arguments** for all operations. Run with `--help` to see all options:
-
-```bash
-python pagespeed_report.py --help
+```
+├── azion_analyzer.py          # Main application
+├── azion_solutions.py         # Azion Platform solution mappings
+├── crux_integration.py        # CrUX History data integration
+├── test_azion_analyzer.py     # Test suite
+├── test_pagespeed_context.py  # Context preservation tests
+├── requirements.txt           # Dependencies
+├── .env.example              # Environment configuration
+├── USAGE_EXAMPLES.md          # Real-world usage scenarios
+└── reports/                  # Generated reports directory
 ```
 
-### Basic Commands
+## ✅ **Redesign Achievements**
 
-#### 1. Analyze a URL with PageSpeed Insights
+This tool has been successfully redesigned from a technical analysis tool into a **marketing-focused platform** that:
+
+- **Maps** 40+ PageSpeed audit types to specific Azion Platform solutions
+- **Prioritizes** recommendations with high/medium/low priority system
+- **Generates** unified HTML reports with Azion branding and marketing focus
+- **Outputs** structured JSON data ready for LLM-based campaign generation
+- **Handles** errors gracefully with best-effort approach
+- **Supports** both interactive and automated usage modes
+
+## 🛠️ Installation & Setup
+
+### 1. Install Dependencies
 ```bash
-python pagespeed_report.py --url https://example.com
+pip install -r requirements.txt
 ```
 
-This will:
-- Test both mobile and desktop performance
-- Generate JSON and HTML reports
-- Save reports in the `./reports` directory
-
-#### 2. Get CrUX History Data (Historical Trends)
+### 2. Get API Key
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Enable **PageSpeed Insights API** and **Chrome UX Report API**
+3. Create an **API Key**
+4. Set environment variable:
 ```bash
-python pagespeed_report.py --crux --url https://example.com
+export PAGESPEED_INSIGHTS_API_KEY='your-api-key-here'
 ```
 
-Optional parameters:
-- `--device phone|desktop|tablet` - Device type (default: phone)
-- `--weeks N` - Number of weeks of data (1-40, default: 25)
-- `--recommendations` - Include PageSpeed Insights recommendations and performance assessment
-
-Example with options:
+Or create a `.env` file:
 ```bash
-python pagespeed_report.py --crux --url https://example.com --device desktop --weeks 30
+cp .env.example .env
+# Edit .env and add your API key
 ```
 
-#### 2a. Get CrUX Data with Performance Assessment & Recommendations (NEW!)
+### 3. Test Installation
 ```bash
-python pagespeed_report.py --crux --url https://example.com --recommendations
+python test_azion_analyzer.py
 ```
 
-This enhanced mode combines:
-- **Historical CrUX data** showing performance trends over time
-- **Performance assessment** based on latest real user data
-- **PageSpeed Insights recommendations** with actionable optimization tips
+## 🎮 Usage
 
-#### 3. Process Existing JSON Report
+### Interactive Mode (Recommended)
 ```bash
-python pagespeed_report.py --json report.json
+python azion_analyzer.py --interactive
 ```
 
-This regenerates HTML reports from previously saved JSON data (no API call needed).
+### Command Line Usage
 
-#### 4. Open Report in Browser Automatically
-Add the `--open` flag to any command:
+#### Basic PageSpeed Analysis
 ```bash
-python pagespeed_report.py --url https://example.com --open
-python pagespeed_report.py --crux --url https://example.com --open
+python azion_analyzer.py --url https://example.com
 ```
 
-### Examples
-
-**Analyze a website:**
+#### Comprehensive Analysis with CrUX History
 ```bash
-$ python pagespeed_report.py --url example.com
-
-🔍 Analyzing https://example.com (this may take a moment)...
-📱 Testing mobile performance...
-💻 Testing desktop performance...
-
-✅ Reports generated successfully!
-
-📄 Files created:
-  • JSON Report: reports/pagespeed_report_20250930_160739.json
-  • Mobile HTML Report: reports/pagespeed_report_mobile_20250930_160739.html
-  • Desktop HTML Report: reports/pagespeed_report_desktop_20250930_160739.html
+python azion_analyzer.py --url https://example.com --crux --device desktop --weeks 30
 ```
 
-**Get CrUX historical data for desktop:**
+#### Generate Marketing JSON
 ```bash
-$ python pagespeed_report.py --crux --url https://example.com --device desktop --weeks 40
-
-🔍 Fetching CrUX History data for https://example.com...
-   Device: DESKTOP
-   Periods: 40 weeks
-
-⏳ This may take a moment...
-📊 Generating visualizations...
-
-✅ CrUX History report generated successfully!
-
-📄 Files created:
-  • JSON Data: reports/crux_history_20250930_160739.json
-  • HTML Report: reports/crux_history_desktop_20250930_160739.html
+python azion_analyzer.py --url https://example.com --crux --output-json marketing_data.json
 ```
 
-**Get CrUX data with performance assessment and recommendations:**
+#### Open Report Automatically
 ```bash
-$ python pagespeed_report.py --crux --url https://example.com --recommendations
-
-🔍 Fetching CrUX History data for https://example.com...
-   Device: PHONE
-   Periods: 25 weeks
-
-⏳ This may take a moment...
-🔍 Fetching PageSpeed Insights recommendations...
-📊 Generating visualizations...
-
-✅ CrUX History report generated successfully!
-
-📄 Files created:
-  • JSON Data: reports/crux_history_20250930_160739.json
-  • HTML Report: reports/crux_history_phone_20250930_160739.html
-
-📈 Summary:
-  • Metrics collected: 5
-  • Time periods: 25 weeks
-  • Performance assessment: Included
-  • Recommendations: 8 opportunities, 3 diagnostics
+python azion_analyzer.py --url https://example.com --open
 ```
 
-**Process existing JSON file:**
-```bash
-$ python pagespeed_report.py --json reports/pagespeed_report_20250930_160739.json
+### Command Line Options
 
-📂 Processing existing JSON file: reports/pagespeed_report_20250930_160739.json
+| Option | Description | Default |
+|--------|-------------|---------|  
+| `--url` | Website URL to analyze | Required |
+| `--device` | Device type: mobile, desktop | mobile |
+| `--crux` | Include CrUX History data | false |
+| `--weeks` | CrUX history weeks (1-40) | 25 |
+| `--interactive` | Interactive guided mode | false |
+| `--open` | Open report in browser | false |
+| `--output-json` | Save marketing data as JSON | none |
 
-📊 Processing data for: https://example.com
-📱 Generating mobile HTML report...
-💻 Generating desktop HTML report...
+## 🎯 Azion Platform Solutions
 
-✅ HTML reports generated successfully!
+The tool maps PageSpeed issues to these Azion solutions:
+
+| Solution | Use Cases | Benefits |
+|----------|-----------|----------|
+| **Edge Cache** | Slow server response, static content | Reduces TTFB, improves loading |
+| **Image Processor** | Large images, old formats | WebP/AVIF conversion, compression |
+| **Edge Functions** | Header manipulation, optimization | Custom logic at edge |
+| **WAF** | Security issues, malicious requests | Protection, performance |
+| **Load Balancer** | High traffic, availability | Distribution, failover |
+| **Tiered Cache** | Cache optimization | Multi-layer caching |
+| **Edge DNS** | DNS lookup delays | Fast resolution |
+| **Applications** | Delivery optimization | Rules engine, device handling |
+
+## 📊 Output Files
+
+### HTML Report
+- **Filename**: `azion_analysis_{device}_{timestamp}.html`
+- **Content**: Unified performance analysis with Azion recommendations
+- **Features**: 
+  - Overall performance scores with Azion branding
+  - Core Web Vitals timeline (if CrUX available)
+  - Prioritized Azion solution recommendations
+  - Marketing-focused summary metrics
+
+### Marketing JSON
+- **Filename**: `azion_marketing_data_{timestamp}.json`
+- **Content**: Structured data for marketing campaigns
+- **Structure**:
+```json
+{
+  "url": "https://example.com",
+  "analysis": { /* PageSpeed analysis */ },
+  "azion_recommendations": { /* Solution mappings */ },
+  "marketing_pitch": {
+    "executive_summary": { /* Key metrics */ },
+    "value_proposition": { /* Benefits */ },
+    "solution_highlights": [ /* Azion products */ ],
+    "next_steps": [ /* Action items */ ]
+  }
+}
 ```
 
-## Output
+## 🧪 Testing
 
-All reports are saved in the `./reports` directory (created automatically if it doesn't exist).
+Run the test suite to validate functionality:
 
-The script generates three files for each run:
+```bash
+python test_azion_analyzer.py
+```
 
-1. **JSON file** (`reports/pagespeed_report_TIMESTAMP.json`)
-   - Contains raw API response data for both mobile and desktop
-   - Useful for further processing or integration with other tools
+Tests cover:
+- Module imports
+- Azion solution mappings
+- Sample data analysis
+- HTML report generation
+- Environment setup
 
-2. **Mobile HTML report** (`reports/pagespeed_report_mobile_TIMESTAMP.html`)
-   - User-friendly visual report for mobile performance
-   - Includes scores, metrics, and recommendations
+## 📈 Marketing Campaign Integration
 
-3. **Desktop HTML report** (`reports/pagespeed_report_desktop_TIMESTAMP.html`)
-   - User-friendly visual report for desktop performance
-   - Includes scores, metrics, and recommendations
+The JSON output is designed for LLM-based marketing campaign generation:
 
-## What's Included in the Reports
+1. **Issue Analysis**: Categorized performance problems
+2. **Solution Mapping**: Specific Azion products for each issue
+3. **Value Metrics**: Quantified benefits and savings
+4. **Executive Summary**: High-level impact assessment
+5. **Action Plan**: Prioritized implementation steps
 
-### Standard PageSpeed Insights Reports
-- **Performance Scores**: Performance, SEO, Accessibility, Best Practices
-- **Core Web Vitals**: FCP, LCP, CLS, TTI, TBT metrics
-- **Recommendations**: Detailed optimization suggestions
+## 🔧 Error Handling
 
-### Enhanced CrUX History Reports (NEW!)
+The tool implements robust error handling:
 
-#### 📊 Historical Performance Timeline
-- Interactive charts showing Core Web Vitals trends over time
-- Up to 40 weeks of real user data from Chrome UX Report
-- Quality score visualization (0-100 scale) for easy interpretation
+- **CrUX Data Unavailable**: Continues with PageSpeed-only analysis
+- **API Failures**: Provides helpful error messages and suggestions
+- **Missing Data**: Uses fallback values and continues processing
+- **Network Issues**: Implements timeouts and retry logic
 
-#### 🎯 Performance Assessment (NEW with --recommendations)
-- **Overall Performance Score**: Calculated from latest CrUX data
-- **Individual Metric Analysis**: Status for each Core Web Vital
-- **Issues Identification**: Metrics that need attention (poor/needs improvement)
-- **Strengths Recognition**: Well-performing metrics
-- **Real User Data**: Based on P75 values from actual Chrome users
-
-#### 🚀 PageSpeed Insights Recommendations (NEW with --recommendations)
-- **Optimization Opportunities**: Specific improvements with potential savings
-- **Diagnostic Recommendations**: Technical issues to address
-- **Actionable Steps**: Clear guidance on how to improve performance
-- **Prioritized Fixes**: Focus on high-impact optimizations
-
-### Key Metrics Explained
-- **First Contentful Paint (FCP)**: Time until first content appears
-- **Largest Contentful Paint (LCP)**: Time until largest content element loads
-- **Cumulative Layout Shift (CLS)**: Visual stability metric
-- **Interaction to Next Paint (INP)**: Responsiveness to user interactions
-- **Time to First Byte (TTFB)**: Server response time
-
-## API Usage Limits
-
-The PageSpeed Insights API has usage limits:
-- **Free tier**: 25,000 queries per day
-- **Rate limit**: 1 query per second per project
-
-For more details, check the [PageSpeed Insights API documentation](https://developers.google.com/speed/docs/insights/v5/get-started).
-
-## Notes
-
-- For best results, test a **publicly accessible URL**
-- The analysis may take 30-60 seconds per URL
-- Make sure the URL is valid and accessible
-- Private/localhost URLs won't work (they need to be publicly accessible)
-
-## Troubleshooting
-
-**Error: "Please set the PAGESPEED_INSIGHTS_API_KEY environment variable"**
-- Make sure you've set the API key as described in the Setup section
-- Verify the environment variable is set: `echo $PAGESPEED_INSIGHTS_API_KEY`
-
-**Error: "Network error occurred"**
-- Check your internet connection
-- Verify the URL is correct and accessible
-- Check if you've exceeded API rate limits
-
-**Error: "Error parsing API response"**
-- The URL may not be publicly accessible
-- The API may have returned an error (check the error message)
-- Verify your API key is valid and the API is enabled
-
-## License
-
-This project is open source and available for personal and commercial use.
+**Ready to optimize your website performance with Azion Platform?** 🚀

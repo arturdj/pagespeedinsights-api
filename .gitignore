@@ -1,5 +1,6 @@
 # Environment variables
 .env
+.venv/
 
 # Python
 __pycache__/
@@ -27,8 +28,8 @@ wheels/
 *.egg
 
 # Generated reports
-reports/
-pagespeed_report_*.json
+# reports/
+# pagespeed_report_*.json
 pagespeed_report_*.html
 
 # IDE
