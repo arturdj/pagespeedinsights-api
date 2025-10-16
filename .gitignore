@@ -1,6 +1,8 @@
 # Environment variables
 .env
 .venv/
+reports/
+ai-intel-azion.json
 
 # Python
 __pycache__/
@@ -39,3 +41,4 @@ pagespeed_report_*.html
 *.swo
 *~
 .DS_Store
+ai-intel-azion.json
