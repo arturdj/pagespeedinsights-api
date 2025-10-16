@@ -2,6 +2,8 @@
 
 A marketing-focused performance analysis tool that maps PageSpeed Insights recommendations to **Azion Platform solutions** for generating targeted marketing campaigns.
 
+**🎉 Now fully converted to JavaScript/Node.js!**
+
 ## 🎯 Main Goals
 
 - **Interactive CLI** and argument-based usage
@@ -46,12 +48,11 @@ A marketing-focused performance analysis tool that maps PageSpeed Insights recom
 ## 📁 Project Structure
 
 ```
-├── azion_analyzer.py          # Main application
-├── azion_solutions.py         # Azion Platform solution mappings
-├── crux_integration.py        # CrUX History data integration
-├── test_azion_analyzer.py     # Test suite
-├── test_pagespeed_context.py  # Context preservation tests
-├── requirements.txt           # Dependencies
+├── azion_analyzer.js          # Main application (JavaScript)
+├── azion_solutions.js         # Azion Platform solution mappings (JavaScript)
+├── crux_integration.js        # CrUX History data integration (JavaScript)
+├── test_azion_analyzer.js     # Test suite (JavaScript)
+├── package.json               # Node.js dependencies
 ├── .env.example              # Environment configuration
 ├── USAGE_EXAMPLES.md          # Real-world usage scenarios
 └── reports/                  # Generated reports directory
@@ -72,7 +73,7 @@ This tool has been successfully redesigned from a technical analysis tool into a
 
 ### 1. Install Dependencies
 ```bash
-pip install -r requirements.txt
+npm install
 ```
 
 ### 2. Get API Key
@@ -92,36 +93,40 @@ cp .env.example .env
 
 ### 3. Test Installation
 ```bash
-python test_azion_analyzer.py
+npm test
+# or
+node test_azion_analyzer.js
 ```
 
 ## 🎮 Usage
 
 ### Interactive Mode (Recommended)
 ```bash
-python azion_analyzer.py --interactive
+npm run interactive
+# or
+node azion_analyzer.js --interactive
 ```
 
 ### Command Line Usage
 
 #### Basic PageSpeed Analysis
 ```bash
-python azion_analyzer.py --url https://example.com
+node azion_analyzer.js --url https://example.com
 ```
 
 #### Comprehensive Analysis with CrUX History
 ```bash
-python azion_analyzer.py --url https://example.com --crux --device desktop --weeks 30
+node azion_analyzer.js --url https://example.com --crux --device desktop --weeks 30
 ```
 
 #### Generate Marketing JSON
 ```bash
-python azion_analyzer.py --url https://example.com --crux --output-json marketing_data.json
+node azion_analyzer.js --url https://example.com --crux --output-json marketing_data.json
 ```
 
 #### Open Report Automatically
 ```bash
-python azion_analyzer.py --url https://example.com --open
+node azion_analyzer.js --url https://example.com --open
 ```
 
 ### Command Line Options
@@ -185,15 +190,19 @@ The tool maps PageSpeed issues to these Azion solutions:
 Run the test suite to validate functionality:
 
 ```bash
-python test_azion_analyzer.py
+npm test
+# or
+node test_azion_analyzer.js
 ```
 
 Tests cover:
-- Module imports
-- Azion solution mappings
-- Sample data analysis
-- HTML report generation
-- Environment setup
+- Module imports and ES6 compatibility
+- Azion solution mappings validation
+- Sample data analysis and processing
+- Marketing campaign data generation
+- Environment setup and file operations
+- Error handling and data validation
+- Core functionality integration
 
 ## 📈 Marketing Campaign Integration
 
