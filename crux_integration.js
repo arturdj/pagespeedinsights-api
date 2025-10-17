@@ -336,7 +336,7 @@ export function createCoreVitalsChart(processedData, url) {
         <div id="${chartDiv}"></div>
         <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
         <script>
-            plotly.newPlot('${chartDiv}', ${JSON.stringify(traces)}, ${JSON.stringify(layout)}, ${JSON.stringify(config)});
+            Plotly.newPlot('${chartDiv}', ${JSON.stringify(traces)}, ${JSON.stringify(layout)}, ${JSON.stringify(config)});
         </script>
     `;
     
