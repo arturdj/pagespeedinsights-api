@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "node azion_analyzer.js",
-    "test": "node test_azion_analyzer.js",
     "interactive": "node azion_analyzer.js --interactive"
   },
   "keywords": [
@@ -24,9 +23,9 @@
     "axios": "^1.6.0",
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
-    "readline-sync": "^1.4.10",
+    "fs-extra": "^11.1.1",
     "open": "^9.1.0",
-    "fs-extra": "^11.1.1"
+    "readline-sync": "^1.4.10"
   },
   "engines": {
     "node": ">=16.0.0"

@@ -1,38 +1,21 @@
 # Environment variables
 .env
-.venv/
 reports/
-ai-intel-azion.json
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.npm
+
+# Build output
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
+build/
 
 # Generated reports
-# reports/
-# pagespeed_report_*.json
 pagespeed_report_*.html
+*.html
 
 # IDE
 .vscode/
@@ -41,4 +24,7 @@ pagespeed_report_*.html
 *.swo
 *~
 .DS_Store
-ai-intel-azion.json
+
+# Temporary files
+*.tmp
+*.temp
