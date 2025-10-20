@@ -1,4 +1,4 @@
-import { AzionSolution, AzionRecommendation, AzionRecommendations, MarketingData, AnalysisResult, IssueInfo, ActionPlan } from '../types';
+import { AzionSolution, AzionRecommendation, AzionRecommendations, MarketingData, AnalysisResult, IssueInfo, ActionPlan } from '../types/index.js';
 
 // Comprehensive Azion Platform Solutions Mapping
 const AZION_SOLUTIONS: Record<string, AzionSolution> = {

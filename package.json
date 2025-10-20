@@ -2,6 +2,7 @@
   "name": "azion-pagespeed-analyzer-ts",
   "version": "1.0.0",
   "description": "TypeScript implementation of Azion PageSpeed Analyzer with API endpoints",
+  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",

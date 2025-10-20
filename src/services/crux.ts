@@ -1,4 +1,4 @@
-import { CrUXData, ProcessedCrUXData, CoreWebVitals, PageSpeedInsightsResponse } from '../types';
+import { CrUXData, ProcessedCrUXData, CoreWebVitals, PageSpeedInsightsResponse } from '../types/index.js';
 
 export class CrUXService {
   

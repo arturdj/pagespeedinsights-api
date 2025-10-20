@@ -1,4 +1,4 @@
-import { AnalysisResult, AzionRecommendations, ProcessedCrUXData } from '../types';
+import { AnalysisResult, AzionRecommendations, ProcessedCrUXData } from '../types/index.js';
 
 export class ReportGeneratorService {
 

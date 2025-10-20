@@ -1,4 +1,4 @@
-import { PageSpeedInsightsResponse, AnalysisResult, IssueInfo, ConsoleError } from '../types';
+import { PageSpeedInsightsResponse, AnalysisResult, IssueInfo, ConsoleError } from '../types/index.js';
 
 const API_TIMEOUT = 120000; // 120 seconds
 

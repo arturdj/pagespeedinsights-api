@@ -1,8 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { AnalyzerService } from './services/analyzer';
-import { AnalysisRequest } from './types';
+import { AnalyzerService } from './services/analyzer.js';
+import { AnalysisRequest } from './types/index.js';
 
 // Load environment variables
 dotenv.config();
@@ -124,7 +124,7 @@ app.post('/html-json', validateAnalysisRequest, async (req: any, res) => {
     const azionRecommendations = result.azion_recommendations;
     
     // Calculate overall score
-    const scores = Object.values(analysis).map(cat => cat.score).filter(score => score !== undefined);
+    const scores = Object.values(analysis).map((cat: any) => cat.score).filter(score => score !== undefined);
     const overallScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
     
     // Group recommendations by category
@@ -154,7 +154,7 @@ app.post('/html-json', validateAnalysisRequest, async (req: any, res) => {
           label: "Overall Score",
           status: overallScore >= 80 ? 'good' : overallScore >= 50 ? 'average' : 'poor'
         },
-        category_scores: Object.entries(analysis).map(([category, data]) => ({
+        category_scores: Object.entries(analysis).map(([category, data]: [string, any]) => ({
           category: category,
           label: category.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase()),
           score: Math.round(data.score),
@@ -170,7 +170,7 @@ app.post('/html-json', validateAnalysisRequest, async (req: any, res) => {
           potential_speed_gain: "40%",
           console_errors: azionRecommendations.marketing_data.summary.console_errors
         },
-        categories: Object.entries(analysis).map(([categoryKey, categoryData]) => {
+        categories: Object.entries(analysis).map(([categoryKey, categoryData]: [string, any]) => {
           const categoryRecommendations = recommendationsByCategory[categoryKey] || [];
           const categoryInfo = {
             performance: { title: 'Performance Optimization', icon: '⚡', color: '#F3652B', description: 'Core Web Vitals and loading performance optimizations' },

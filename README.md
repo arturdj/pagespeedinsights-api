@@ -1,9 +1,10 @@
-# Azion PageSpeed Analyzer - TypeScript Edition
+# Azion PageSpeed Analyzer - Edge Functions Edition
 
-A professional TypeScript implementation of the Azion PageSpeed Analyzer with comprehensive API endpoints for website performance analysis and optimization recommendations.
+A professional TypeScript implementation of the Azion PageSpeed Analyzer running on **Azion Edge Functions** with comprehensive API endpoints for website performance analysis and optimization recommendations.
 
 ## 🚀 Features
 
+- **Edge Functions**: Runs on Azion's global edge network for ultra-low latency
 - **PageSpeed Insights Integration**: Fetch and analyze performance data from Google's PageSpeed Insights API
 - **CrUX Data Integration**: Include Chrome User Experience Report data with interactive charts
 - **Azion Solutions Mapping**: Intelligent mapping of performance issues to Azion Platform solutions
@@ -16,25 +17,26 @@ A professional TypeScript implementation of the Azion PageSpeed Analyzer with co
   - 📊 Response statistics (file size, line count)
   - 🎯 Multiple output formats (JSON, HTML, Combined, Structured Data)
 - **TypeScript**: Fully typed codebase for better development experience
-- **No File System**: Pure in-memory processing without file system dependencies
+- **Global Distribution**: Deployed to Azion's edge network worldwide
 
 ## 📋 Requirements
 
 - Node.js 18+ 
 - TypeScript 5+
+- Azion CLI
 - Google PageSpeed Insights API Key
 - Chrome User Experience Report API access (optional)
 
-## 🛠️ Installation
+## 🛠️ Installation & Setup
 
-1. **Clone and navigate to the TypeScript directory:**
-```bash
-cd typescript
-```
-
-2. **Install dependencies:**
+1. **Install dependencies:**
 ```bash
 npm install
+```
+
+2. **Install Azion CLI globally (if not already installed):**
+```bash
+npm install -g azion
 ```
 
 3. **Build the project:**
@@ -42,14 +44,40 @@ npm install
 npm run build
 ```
 
-4. **Start the server:**
-```bash
-npm start
-```
-
-Or for development with auto-reload:
+4. **Start development server:**
 ```bash
 npm run dev
+# or
+azion dev
+```
+
+5. **Deploy to Azion Edge:**
+```bash
+npm run deploy
+# or
+azion deploy
+```
+
+## 🌐 Edge Functions Deployment
+
+This project is configured to run on **Azion Edge Functions** with the following benefits:
+
+- **Global Distribution**: Your API runs on 100+ edge locations worldwide
+- **Ultra-Low Latency**: Responses served from the nearest edge location
+- **Auto-Scaling**: Automatically scales based on demand
+- **High Availability**: Built-in redundancy and failover
+- **Cost Effective**: Pay only for what you use
+
+### Development vs Production
+
+**Development (Local):**
+```bash
+npm run dev        # Runs locally with azion dev
+```
+
+**Production (Edge):**
+```bash
+npm run deploy     # Deploys to Azion Edge Network
 ```
 
 ## 🔧 API Endpoints

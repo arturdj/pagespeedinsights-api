@@ -19,3 +19,7 @@ pagespeed_report_*.html
 *.swo
 *~
 .DS_Store
+#Paths added by Azion CLI
+.edge/
+.vulcan
+.open-next

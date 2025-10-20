@@ -1,8 +1,8 @@
-import { PageSpeedService } from './pagespeed';
-import { AzionSolutionsService } from './azion-solutions';
-import { CrUXService } from './crux';
-import { ReportGeneratorService } from './report-generator';
-import { AnalysisRequest, AnalysisResponse } from '../types';
+import { PageSpeedService } from './pagespeed.js';
+import { AzionSolutionsService } from './azion-solutions.js';
+import { CrUXService } from './crux.js';
+import { ReportGeneratorService } from './report-generator.js';
+import { AnalysisRequest, AnalysisResponse } from '../types/index.js';
 
 export class AnalyzerService {
   private pageSpeedService: PageSpeedService;
