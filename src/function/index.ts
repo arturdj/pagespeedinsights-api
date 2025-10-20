@@ -913,8 +913,14 @@ function handleManualInterface(corsHeaders: Record<string, string>): Response {
                 '  body: JSON.stringify(' + JSON.stringify(data, null, 2) + ')\\n' +
                 '})\\n' +
                 '.then(response => response.json())\\n' +
-                '.then(data => console.log(data))\\n' +
-                '.catch(error => console.error(\\'Error:\\', error));';
+                '.then(data => {\\n' +
+                '  // Process response data\\n' +
+                '  return data;\\n' +
+                '})\\n' +
+                '.catch(error => {\\n' +
+                '  // Handle error\\n' +
+                '  throw error;\\n' +
+                '});';
             document.getElementById('fetchCommand').textContent = fetchCommand;
             
             // Python requests

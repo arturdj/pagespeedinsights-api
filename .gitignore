@@ -6,7 +6,6 @@ ai-intel-azion.json
 
 # Node
 node_modules/
-package-lock.json
 dist/
 
 # Generated reports

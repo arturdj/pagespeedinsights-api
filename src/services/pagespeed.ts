@@ -22,8 +22,6 @@ export class PageSpeedService {
       params.append('category', category);
     });
 
-    console.log(`🔍 PageSpeed API call: ${endpoint}?${params.toString().replace(/key=[^&]+/, 'key=***')}`);
-
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);

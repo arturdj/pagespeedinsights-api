@@ -24,12 +24,10 @@ export class AnalyzerService {
       throw new Error('API key is required for analysis');
     }
     
-    console.log(`🔍 Analyzing ${url} (${device})...`);
-    console.log(`🔑 Using API key: ${api_key.substring(0, 10)}...${api_key.substring(api_key.length - 4)}`);
+    // Starting analysis
     
     try {
       // Get PageSpeed Insights data
-      console.log('📊 Fetching PageSpeed Insights data...');
       const pagespeedData = await this.pageSpeedService.getPageSpeedInsights(
         api_key, 
         url, 
@@ -41,7 +39,6 @@ export class AnalyzerService {
       }
 
       // Analyze data
-      console.log('🔬 Analyzing performance data...');
       const analysis = this.pageSpeedService.analyzePageSpeedData(pagespeedData);
 
       if (!analysis) {
@@ -52,7 +49,7 @@ export class AnalyzerService {
       let cruxData = null;
       let cruxChartHtml = '';
       if (use_crux) {
-        console.log('📊 Fetching CrUX History data...');
+        // Fetching CrUX History data
         const formFactor = device === 'mobile' ? 'PHONE' : device === 'desktop' ? 'DESKTOP' : 'TABLET';
         
         const cruxRawData = await this.cruxService.getCrUXHistory(api_key, url, formFactor, weeks);
@@ -60,23 +57,19 @@ export class AnalyzerService {
         cruxData = this.cruxService.processCrUXData(cruxRawData, pagespeedCoreVitals);
 
         if (cruxData && cruxData.has_crux_data) {
-          console.log(`✅ CrUX data integrated with ${cruxData.dates.length} data points`);
           cruxChartHtml = this.cruxService.createCoreVitalsChart(cruxData, url);
         } else if (cruxData && cruxData.has_pagespeed_data) {
-          console.log('✅ Using PageSpeed Insights data for Core Web Vitals');
           cruxChartHtml = this.cruxService.createCoreVitalsChart(cruxData, url);
         }
       }
 
       // Generate Azion recommendations
-      console.log('🎯 Generating Azion recommendations...');
       const azionRecommendations = this.azionSolutionsService.generateAzionRecommendations(analysis);
 
       // Generate reports
       const timestamp = new Date().toLocaleString();
       
       // HTML Report
-      console.log('📄 Generating HTML report...');
       const htmlReport = this.reportGeneratorService.generateUnifiedHtmlReport(
         url, 
         analysis, 
@@ -89,11 +82,7 @@ export class AnalyzerService {
       // Generate marketing pitch
       const marketingPitch = this.formatMarketingPitch(azionRecommendations.marketing_data, url);
 
-      console.log('✅ Analysis complete!');
-      console.log(`📈 Summary:`);
-      console.log(`  • Issues found: ${azionRecommendations.marketing_data.summary.total_issues}`);
-      console.log(`  • High priority: ${azionRecommendations.marketing_data.summary.high_priority_issues}`);
-      console.log(`  • Azion solutions: ${azionRecommendations.solution_count}`);
+      // Analysis complete
 
       return {
         url,
@@ -162,12 +151,7 @@ export class AnalyzerService {
     // Basic validation - API keys should be at least 30 characters
     // and typically start with 'AIza' for Google APIs
     if (!apiKey || apiKey.length < 30) {
-      console.log(`❌ API key validation failed: too short (${apiKey?.length || 0} characters)`);
       return false;
-    }
-    
-    if (!apiKey.startsWith('AIza')) {
-      console.log(`⚠️  API key doesn't start with 'AIza' - this might not be a valid Google API key`);
     }
     
     return true;

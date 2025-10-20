@@ -1,6 +1,6 @@
-# Azion PageSpeed Analyzer - Edge Functions Edition
+# Azion PageSpeed Analyzer - TypeScript Edition
 
-A professional TypeScript implementation of the Azion PageSpeed Analyzer running on **Azion Edge Functions** with comprehensive API endpoints for website performance analysis and optimization recommendations.
+A professional TypeScript implementation of the Azion PageSpeed Analyzer with comprehensive API endpoints for website performance analysis and optimization recommendations. Supports both traditional server deployment and Azion Edge Functions.
 
 ## 🚀 Features
 
@@ -58,6 +58,34 @@ npm run deploy
 azion deploy
 ```
 
+## 📁 Project Structure
+
+```
+pagespeedinsights-api/
+├── src/                          # Source code
+│   ├── function/                 # Edge function handler
+│   │   └── index.ts             # Main edge function entry point
+│   ├── services/                # Business logic services
+│   │   ├── analyzer.ts          # Main analysis orchestrator
+│   │   ├── pagespeed.ts         # PageSpeed Insights API client
+│   │   ├── crux.ts              # Chrome UX Report integration
+│   │   ├── azion-solutions.ts   # Azion solutions mapping
+│   │   └── report-generator.ts  # HTML report generation
+│   ├── types/                   # TypeScript type definitions
+│   │   ├── index.ts             # Main types
+│   │   └── event.ts             # Edge function event types
+│   └── server.ts                # Express server (for local development)
+├── azion/                       # Azion deployment configuration
+│   └── azion.json              # Azion project settings
+├── dist/                        # Compiled JavaScript (generated)
+├── index.ts                     # Edge function entry point
+├── example.js                   # Usage examples
+├── start.sh                     # Quick start script
+├── package.json                 # Dependencies and scripts
+├── tsconfig.json               # TypeScript configuration
+└── README.md                   # This file
+```
+
 ## 🌐 Edge Functions Deployment
 
 This project is configured to run on **Azion Edge Functions** with the following benefits:
@@ -79,6 +107,15 @@ npm run dev        # Runs locally with azion dev
 ```bash
 npm run deploy     # Deploys to Azion Edge Network
 ```
+
+## 📜 Available Scripts
+
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm run start` - Start the production server
+- `npm run dev` - Start development server with hot reload
+- `npm run clean` - Remove compiled files
+- `npm run rebuild` - Clean and rebuild the project
+- `npm test` - Run tests (placeholder)
 
 ## 🔧 API Endpoints
 

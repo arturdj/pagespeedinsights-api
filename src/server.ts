@@ -830,7 +830,12 @@ app.get('/manual', (req, res) => {
         </div>
         
         <div class="result-section" id="result">
-            <h3 class="result-header">✅ Analysis Complete</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 class="result-header" style="margin: 0;">✅ Analysis Complete</h3>
+                <button class="btn btn-secondary" onclick="downloadResponse()" style="padding: 8px 16px; font-size: 12px;">
+                    📥 Download Results
+                </button>
+            </div>
             
             <div id="summaryContent"></div>
             
@@ -855,6 +860,7 @@ app.get('/manual', (req, res) => {
                     <div class="code-container">
                         <div class="code-block">
                             <button class="copy-btn" onclick="copyToClipboard('responseData', this)">Copy</button>
+                            <button class="copy-btn" onclick="downloadResponse()" style="right: 60px; background: #4285F4;">Download</button>
                             <pre id="responseData"></pre>
                         </div>
                     </div>
@@ -939,11 +945,11 @@ app.get('/manual', (req, res) => {
             if (isReport) {
                 responseHandler = '.then(response => response.text())\\n.then(html => {\\n  // Create downloadable link for HTML report\\n  const blob = new Blob([html], { type: \\'text/html\\' });\\n  const url = URL.createObjectURL(blob);\\n  const a = document.createElement(\\'a\\');\\n  a.href = url;\\n  a.download = \\'pagespeed-report.html\\';\\n  a.click();\\n})';
             } else if (isFull) {
-                responseHandler = '.then(response => response.json())\\n.then(data => {\\n  console.log(\\'Full analysis data:\\', data);\\n  // Access HTML report: data.html_report\\n  // Access JSON analysis: data (all other fields)\\n})';
+                responseHandler = '.then(response => response.json())\\n.then(data => {\\n  // Access HTML report: data.html_report\\n  // Access JSON analysis: data (all other fields)\\n  return data;\\n})';
             } else if (isHtmlJson) {
-                responseHandler = '.then(response => response.json())\\n.then(data => {\\n  console.log(\\'Structured report data:\\', data);\\n  // Access report data: data.report_data\\n  // Access scores: data.report_data.category_scores\\n  // Access recommendations: data.report_data.categories\\n})';
+                responseHandler = '.then(response => response.json())\\n.then(data => {\\n  // Access report data: data.report_data\\n  // Access scores: data.report_data.category_scores\\n  // Access recommendations: data.report_data.categories\\n  return data;\\n})';
             } else {
-                responseHandler = '.then(response => response.json())\\n.then(data => console.log(data))';
+                responseHandler = '.then(response => response.json())\\n.then(data => {\\n  // Process analysis data\\n  return data;\\n})';
             }
             
             const fetchCommand = 'fetch(\\'' + baseUrl + '/' + endpoint + '\\', {\\n' +
@@ -1138,8 +1144,61 @@ app.get('/manual', (req, res) => {
             }
         }
         
+        // Global variables to track current response data
+        let currentResponseData = null;
+        let currentEndpointType = 'analyze';
+        let currentUrl = '';
+        
+        function downloadResponse() {
+            const responseData = document.getElementById('responseData').textContent;
+            if (!responseData) {
+                alert('No response data to download');
+                return;
+            }
+            
+            // Determine file extension and MIME type based on endpoint
+            let filename, mimeType;
+            const timestamp = new Date().toISOString().slice(0, 19).replace(/[:.]/g, '-');
+            const urlSlug = currentUrl.replace(/https?:\/\//, '').replace(/[^a-zA-Z0-9]/g, '-').slice(0, 30);
+            
+            switch (currentEndpointType) {
+                case 'report':
+                    filename = 'pagespeed-report-' + urlSlug + '-' + timestamp + '.html';
+                    mimeType = 'text/html';
+                    break;
+                case 'html-json':
+                    filename = 'pagespeed-structured-' + urlSlug + '-' + timestamp + '.json';
+                    mimeType = 'application/json';
+                    break;
+                case 'full':
+                    filename = 'pagespeed-full-' + urlSlug + '-' + timestamp + '.json';
+                    mimeType = 'application/json';
+                    break;
+                default: // analyze
+                    filename = 'pagespeed-analysis-' + urlSlug + '-' + timestamp + '.json';
+                    mimeType = 'application/json';
+                    break;
+            }
+            
+            // Create and download file
+            const blob = new Blob([responseData], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
         async function performAnalysis(endpoint, endpointType) {
             const data = getCurrentRequestData();
+            
+            // Update global variables for download functionality
+            currentEndpointType = endpointType;
+            currentUrl = data.url;
             
             // Hide previous results
             error.style.display = 'none';
