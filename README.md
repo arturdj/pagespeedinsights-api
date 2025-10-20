@@ -1,217 +1,339 @@
-# Azion PageSpeed Analyzer
+# Azion PageSpeed Analyzer - TypeScript Edition
 
-A marketing-focused performance analysis tool that maps PageSpeed Insights recommendations to **Azion Platform solutions** for generating targeted marketing campaigns.
-
-## 🎯 Main Goals
-
-- **Interactive CLI** and argument-based usage
-- **Map performance issues** to specific Azion Platform solutions  
-- **Generate unified HTML reports** with Azion recommendations
-- **Output structured JSON** for marketing campaign generation
-- **Robust error handling** with best-effort approach
-- **Integrate CrUX History** with PageSpeed Insights data
+A professional TypeScript implementation of the Azion PageSpeed Analyzer with comprehensive API endpoints for website performance analysis and optimization recommendations.
 
 ## 🚀 Features
 
-### ✅ **Completed Core Features**
+- **PageSpeed Insights Integration**: Fetch and analyze performance data from Google's PageSpeed Insights API
+- **CrUX Data Integration**: Include Chrome User Experience Report data with interactive charts
+- **Azion Solutions Mapping**: Intelligent mapping of performance issues to Azion Platform solutions
+- **HTML Report Generation**: Beautiful, comprehensive HTML reports with embedded charts
+- **REST API**: Clean API endpoints for programmatic access
+- **Enhanced Manual Interface**: User-friendly web interface with advanced features:
+  - 📄 Expandable Full Response section with no data truncation
+  - 📋 Universal copy functionality (works across all browsers)
+  - 💾 Download buttons with real-time file size information
+  - 📊 Response statistics (file size, line count)
+  - 🎯 Multiple output formats (JSON, HTML, Combined, Structured Data)
+- **TypeScript**: Fully typed codebase for better development experience
+- **No File System**: Pure in-memory processing without file system dependencies
 
-1. **Interactive CLI Interface**
-   - Guided setup for non-technical users
-   - Argument-based usage for automation
-   - Device selection (mobile/desktop/tablet)
-   - CrUX integration options
+## 📋 Requirements
 
-2. **Azion Platform Solution Mapping**
-   - Maps 40+ PageSpeed audit types to Azion solutions
-   - Prioritizes recommendations (high/medium/low)
-   - Covers Edge Cache, Image Processor, WAF, Edge Functions, etc.
+- Node.js 18+ 
+- TypeScript 5+
+- Google PageSpeed Insights API Key
+- Chrome User Experience Report API access (optional)
 
-3. **Unified HTML Reports**
-   - Single comprehensive report file
-   - Azion-branded styling with marketing focus
-   - Core Web Vitals timeline (when CrUX available)
-   - Actionable Azion solution recommendations
+## 🛠️ Installation
 
-4. **Marketing Campaign JSON Output**
-   - Structured issue → solution mappings
-   - Executive summary with impact metrics
-   - Solution highlights and value propositions
-   - Ready for LLM-based campaign generation
-
-5. **Robust Error Handling**
-   - Continues processing when CrUX data unavailable
-   - Graceful API failure handling
-   - Best-effort approach to maximize output
-
-## 📁 Project Structure
-
-```
-├── azion_analyzer.py          # Main application
-├── azion_solutions.py         # Azion Platform solution mappings
-├── crux_integration.py        # CrUX History data integration
-├── test_azion_analyzer.py     # Test suite
-├── test_pagespeed_context.py  # Context preservation tests
-├── requirements.txt           # Dependencies
-├── .env.example              # Environment configuration
-├── USAGE_EXAMPLES.md          # Real-world usage scenarios
-└── reports/                  # Generated reports directory
-```
-
-## ✅ **Redesign Achievements**
-
-This tool has been successfully redesigned from a technical analysis tool into a **marketing-focused platform** that:
-
-- **Maps** 40+ PageSpeed audit types to specific Azion Platform solutions
-- **Prioritizes** recommendations with high/medium/low priority system
-- **Generates** unified HTML reports with Azion branding and marketing focus
-- **Outputs** structured JSON data ready for LLM-based campaign generation
-- **Handles** errors gracefully with best-effort approach
-- **Supports** both interactive and automated usage modes
-
-## 🛠️ Installation & Setup
-
-### 1. Install Dependencies
+1. **Clone and navigate to the TypeScript directory:**
 ```bash
-pip install -r requirements.txt
+cd typescript
 ```
 
-### 2. Get API Key
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Enable **PageSpeed Insights API** and **Chrome UX Report API**
-3. Create an **API Key**
-4. Set environment variable:
+2. **Install dependencies:**
 ```bash
-export PAGESPEED_INSIGHTS_API_KEY='your-api-key-here'
+npm install
 ```
 
-Or create a `.env` file:
+3. **Build the project:**
 ```bash
-cp .env.example .env
-# Edit .env and add your API key
+npm run build
 ```
 
-### 3. Test Installation
+4. **Start the server:**
 ```bash
-python test_azion_analyzer.py
+npm start
 ```
 
-## 🎮 Usage
-
-### Interactive Mode (Recommended)
+Or for development with auto-reload:
 ```bash
-python azion_analyzer.py --interactive
+npm run dev
 ```
 
-### Command Line Usage
+## 🔧 API Endpoints
 
-#### Basic PageSpeed Analysis
-```bash
-python azion_analyzer.py --url https://example.com
-```
+### `POST /analyze`
+Analyze website performance and get Azion recommendations.
 
-#### Comprehensive Analysis with CrUX History
-```bash
-python azion_analyzer.py --url https://example.com --crux --device desktop --weeks 30
-```
-
-#### Generate Marketing JSON
-```bash
-python azion_analyzer.py --url https://example.com --crux --output-json marketing_data.json
-```
-
-#### Open Report Automatically
-```bash
-python azion_analyzer.py --url https://example.com --open
-```
-
-### Command Line Options
-
-| Option | Description | Default |
-|--------|-------------|---------|  
-| `--url` | Website URL to analyze | Required |
-| `--device` | Device type: mobile, desktop | mobile |
-| `--crux` | Include CrUX History data | false |
-| `--weeks` | CrUX history weeks (1-40) | 25 |
-| `--interactive` | Interactive guided mode | false |
-| `--open` | Open report in browser | false |
-| `--output-json` | Save marketing data as JSON | none |
-
-## 🎯 Azion Platform Solutions
-
-The tool maps PageSpeed issues to these Azion solutions:
-
-| Solution | Use Cases | Benefits |
-|----------|-----------|----------|
-| **Edge Cache** | Slow server response, static content | Reduces TTFB, improves loading |
-| **Image Processor** | Large images, old formats | WebP/AVIF conversion, compression |
-| **Edge Functions** | Header manipulation, optimization | Custom logic at edge |
-| **WAF** | Security issues, malicious requests | Protection, performance |
-| **Load Balancer** | High traffic, availability | Distribution, failover |
-| **Tiered Cache** | Cache optimization | Multi-layer caching |
-| **Edge DNS** | DNS lookup delays | Fast resolution |
-| **Applications** | Delivery optimization | Rules engine, device handling |
-
-## 📊 Output Files
-
-### HTML Report
-- **Filename**: `azion_analysis_{device}_{timestamp}.html`
-- **Content**: Unified performance analysis with Azion recommendations
-- **Features**: 
-  - Overall performance scores with Azion branding
-  - Core Web Vitals timeline (if CrUX available)
-  - Prioritized Azion solution recommendations
-  - Marketing-focused summary metrics
-
-### Marketing JSON
-- **Filename**: `azion_marketing_data_{timestamp}.json`
-- **Content**: Structured data for marketing campaigns
-- **Structure**:
+**Request Body:**
 ```json
 {
   "url": "https://example.com",
-  "analysis": { /* PageSpeed analysis */ },
-  "azion_recommendations": { /* Solution mappings */ },
-  "marketing_pitch": {
-    "executive_summary": { /* Key metrics */ },
-    "value_proposition": { /* Benefits */ },
-    "solution_highlights": [ /* Azion products */ ],
-    "next_steps": [ /* Action items */ ]
+  "api_key": "your-pagespeed-api-key",
+  "device": "mobile",
+  "use_crux": true,
+  "weeks": 25
+}
+```
+
+**Response:**
+```json
+{
+  "url": "https://example.com",
+  "device": "mobile",
+  "timestamp": "2025-10-17 21:35:00",
+  "analysis": {
+    "performance": { "score": 85, "issues": [...] },
+    "accessibility": { "score": 92, "issues": [...] },
+    "best_practices": { "score": 88, "issues": [...] },
+    "seo": { "score": 95, "issues": [...] }
+  },
+  "azion_recommendations": {
+    "recommendations": [...],
+    "marketing_data": {...},
+    "solution_count": 8
+  },
+  "crux_data": {...},
+  "html_report": "<!DOCTYPE html>...",
+  "marketing_pitch": {...}
+}
+```
+
+### `POST /report`
+Generate and return an HTML performance report.
+
+**Request Body:** Same as `/analyze`
+
+**Response:** HTML document with comprehensive performance analysis
+
+### `POST /full`
+Get both JSON analysis and HTML report in a single response.
+
+**Request Body:** Same as `/analyze`
+
+**Response:**
+```json
+{
+  "url": "https://example.com",
+  "device": "mobile",
+  "analysis": {...},
+  "azion_recommendations": {...},
+  "crux_data": {...},
+  "html_report": "<!DOCTYPE html>...",
+  "marketing_pitch": {...}
+}
+```
+
+### `POST /html-json`
+Get structured data values used to populate HTML reports for programmatic access.
+
+**Request Body:** Same as `/analyze`
+
+**Response:**
+```json
+{
+  "url": "https://example.com",
+  "device": "mobile",
+  "report_data": {
+    "header": {...},
+    "overall_score": {...},
+    "category_scores": [...],
+    "optimization_summary": {...},
+    "categories": {...},
+    "crux_data": {...},
+    "marketing_pitch": {...}
   }
 }
 ```
 
-## 🧪 Testing
+### `GET /manual`
+Interactive web interface for manual testing and configuration with enhanced features:
 
-Run the test suite to validate functionality:
+**Key Features:**
+- 🔧 **Configuration Panel**: Easy form-based setup for URL, device type, and options
+- 📋 **Request Format Examples**: Auto-generated cURL, JavaScript, and Python code samples
+- 📄 **Expandable Full Response**: Collapsible section showing complete response data without truncation
+- 💾 **Smart Downloads**: Download buttons with real-time file size information
+- 📊 **Response Statistics**: Live file size and line count display
+- 🎯 **Multiple Output Types**:
+  - JSON Analysis: Complete performance data
+  - HTML Report: Downloadable performance report
+  - Full JSON + HTML: Combined analysis and report
+  - HTML in JSON Format: Structured data for programmatic access
+- 📱 **Responsive Design**: Works seamlessly on desktop and mobile devices
 
+### `GET /health`
+Health check endpoint.
+
+### `GET /docs`
+API documentation with examples.
+
+## 🌐 Usage Examples
+
+### cURL
 ```bash
-python test_azion_analyzer.py
+curl -X POST \
+  -H "Content-Type: application/json" \
+  -d '{
+    "url": "https://example.com",
+    "api_key": "your-api-key",
+    "device": "mobile",
+    "use_crux": true,
+    "weeks": 25
+  }' \
+  http://localhost:3000/analyze
 ```
 
-Tests cover:
-- Module imports
-- Azion solution mappings
-- Sample data analysis
-- HTML report generation
-- Environment setup
+### JavaScript Fetch
+```javascript
+fetch('http://localhost:3000/analyze', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    url: 'https://example.com',
+    api_key: 'your-api-key',
+    device: 'mobile',
+    use_crux: true,
+    weeks: 25
+  })
+})
+.then(response => response.json())
+.then(data => console.log(data))
+.catch(error => console.error('Error:', error));
+```
 
-## 📈 Marketing Campaign Integration
+### Python
+```python
+import requests
 
-The JSON output is designed for LLM-based marketing campaign generation:
+data = {
+    "url": "https://example.com",
+    "api_key": "your-api-key",
+    "device": "mobile",
+    "use_crux": True,
+    "weeks": 25
+}
 
-1. **Issue Analysis**: Categorized performance problems
-2. **Solution Mapping**: Specific Azion products for each issue
-3. **Value Metrics**: Quantified benefits and savings
-4. **Executive Summary**: High-level impact assessment
-5. **Action Plan**: Prioritized implementation steps
+response = requests.post('http://localhost:3000/analyze', json=data)
+result = response.json()
+print(result)
+```
 
-## 🔧 Error Handling
+## 🔑 API Key Setup
 
-The tool implements robust error handling:
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable the PageSpeed Insights API
+4. Enable the Chrome UX Report API (for CrUX data)
+5. Create credentials (API Key)
+6. Use the API key in your requests
 
-- **CrUX Data Unavailable**: Continues with PageSpeed-only analysis
-- **API Failures**: Provides helpful error messages and suggestions
-- **Missing Data**: Uses fallback values and continues processing
-- **Network Issues**: Implements timeouts and retry logic
+**Quick Start with Manual Interface:**
+1. Start the server: `npm run dev`
+2. Open `http://localhost:3000/manual` in your browser
+3. Enter your website URL and API key
+4. Select device type and output format
+5. Click "Execute Request" to analyze
+6. Use the expandable "Full Response" section to view complete data
+7. Download results with file size information clearly displayed
 
-**Ready to optimize your website performance with Azion Platform?** 🚀
+## 📊 Features Overview
+
+### Performance Analysis
+- **Core Web Vitals**: LCP, FID, CLS, INP, TTFB
+- **Performance Metrics**: Speed Index, Total Blocking Time, etc.
+- **Accessibility Audits**: WCAG compliance checks
+- **SEO Analysis**: Meta tags, structured data, crawlability
+- **Best Practices**: Security, modern standards compliance
+
+### Azion Solutions Integration
+- **Edge Applications**: Global content delivery and optimization
+- **Edge Functions**: Serverless computing at the edge
+- **Image Processor**: Automatic image optimization and format conversion
+- **Edge Cache**: Multi-layer caching architecture
+- **Edge Firewall**: Comprehensive security protection
+- **Load Balancer**: Intelligent traffic distribution
+- **Best Practices Review**: Expert optimization recommendations
+
+### Report Generation
+- **Interactive Charts**: Core Web Vitals timeline with Plotly.js
+- **Detailed Recommendations**: Prioritized optimization suggestions
+- **Console Error Analysis**: JavaScript error detection and reporting
+- **Marketing Data**: Campaign-ready performance insights
+- **Professional Design**: Modern, responsive HTML reports
+
+## 🏗️ Architecture
+
+```
+typescript/
+├── src/
+│   ├── types/           # TypeScript interfaces and types
+│   ├── services/        # Core business logic services
+│   │   ├── analyzer.ts      # Main orchestration service
+│   │   ├── pagespeed.ts     # PageSpeed Insights integration
+│   │   ├── azion-solutions.ts # Azion solutions mapping
+│   │   ├── crux.ts          # CrUX data processing
+│   │   └── report-generator.ts # HTML report generation
+│   └── server.ts        # Express API server
+├── dist/               # Compiled JavaScript (generated)
+├── package.json        # Dependencies and scripts
+├── tsconfig.json       # TypeScript configuration
+└── README.md          # This file
+```
+
+## 🚦 Development
+
+### Available Scripts
+- `npm run build` - Compile TypeScript to JavaScript
+- `npm start` - Start the production server
+- `npm run dev` - Start development server with auto-reload
+- `npm test` - Run tests (placeholder)
+
+### Environment Variables
+- `PORT` - Server port (default: 3000)
+
+## 🔒 Security Notes
+
+- API keys are not stored or logged
+- All requests are validated and sanitized
+- CORS is enabled for cross-origin requests
+- No file system access - everything runs in memory
+
+## 🎯 Key Differences from Python Version
+
+1. **No CLI Interface** - Pure API-based approach
+2. **No File System** - All processing in memory
+3. **TypeScript Types** - Full type safety and IntelliSense
+4. **REST API** - Clean HTTP endpoints instead of command-line
+5. **Enhanced Manual Interface** - Advanced web-based testing interface with:
+   - Expandable response sections
+   - Universal copy functionality
+   - Real-time file size information
+   - Multiple output format support
+6. **Vanilla Dependencies** - Minimal external dependencies
+7. **Professional Architecture** - Service-based modular design
+8. **Multiple API Endpoints** - Specialized endpoints for different use cases
+
+## 📈 Performance
+
+- **Fast Analysis**: Optimized API calls and data processing
+- **Memory Efficient**: No file system operations
+- **Concurrent Requests**: Express.js handles multiple simultaneous analyses
+- **Error Handling**: Robust error handling and validation
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
+
+## 📄 License
+
+MIT License - see LICENSE file for details
+
+## 🆘 Support
+
+For support and questions:
+- Check the `/docs` endpoint for API documentation
+- Use the `/manual` interface for interactive testing
+- Review the console logs for debugging information
+
+---
+
+**Ready to optimize your website with Azion's edge platform? Start analyzing today!** 🚀

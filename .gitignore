@@ -4,34 +4,12 @@
 reports/
 ai-intel-azion.json
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-env/
-venv/
-ENV/
-build/
-develop-eggs/
+# Node
+node_modules/
+package-lock.json
 dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
 
 # Generated reports
-# reports/
-# pagespeed_report_*.json
 pagespeed_report_*.html
 
 # IDE
@@ -41,4 +19,3 @@ pagespeed_report_*.html
 *.swo
 *~
 .DS_Store
-ai-intel-azion.json
