@@ -45,8 +45,15 @@ npm run build
 ```
 
 4. **Start development server:**
+
+**Local Express Server:**
 ```bash
 npm run dev
+```
+
+**Azion Edge Functions (Local):**
+```bash
+npm run dev:edge
 # or
 azion dev
 ```
@@ -73,11 +80,18 @@ pagespeedinsights-api/
 │   │   └── report-generator.ts  # HTML report generation
 │   ├── types/                   # TypeScript type definitions
 │   │   ├── index.ts             # Main types
-│   │   └── event.ts             # Edge function event types
+│   │   ├── event.ts             # Edge function event types
+│   │   └── global.d.ts          # Global type declarations
+│   ├── utils/                   # Shared utilities (NEW)
+│   │   ├── validation.ts        # Request validation logic
+│   │   ├── error-handling.ts    # Unified error handling
+│   │   ├── manual-interface-styles.ts # CSS styles
+│   │   └── manual-interface-template.ts # HTML/JS template
 │   └── server.ts                # Express server (for local development)
 ├── azion/                       # Azion deployment configuration
-│   └── azion.json              # Azion project settings
-├── dist/                        # Compiled JavaScript (generated)
+│   ├── azion.json              # Azion project settings
+│   └── args.json               # Deployment arguments
+├── .edge/                       # Build output (generated)
 ├── index.ts                     # Edge function entry point
 ├── example.js                   # Usage examples
 ├── start.sh                     # Quick start script
@@ -98,9 +112,14 @@ This project is configured to run on **Azion Edge Functions** with the following
 
 ### Development vs Production
 
-**Development (Local):**
+**Development (Local Express):**
 ```bash
-npm run dev        # Runs locally with azion dev
+npm run dev        # Runs Express server locally
+```
+
+**Development (Local Edge Functions):**
+```bash
+npm run dev:edge   # Runs locally with azion dev
 ```
 
 **Production (Edge):**
@@ -110,10 +129,18 @@ npm run deploy     # Deploys to Azion Edge Network
 
 ## 📜 Available Scripts
 
+### **Local Development:**
+- `npm run dev` - Start Express server locally with hot reload
+- `npm run dev:edge` - Start Azion Edge Functions locally
+
+### **Build & Deploy:**
 - `npm run build` - Compile TypeScript to JavaScript
-- `npm run start` - Start the production server
-- `npm run dev` - Start development server with hot reload
-- `npm run clean` - Remove compiled files
+- `npm run build:edge` - Build for Azion Edge Functions
+- `npm run deploy` - Deploy to Azion Edge Network
+- `npm run start` - Start the production Express server
+
+### **Utilities:**
+- `npm run clean` - Remove compiled files (dist/ and .edge/)
 - `npm run rebuild` - Clean and rebuild the project
 - `npm test` - Run tests (placeholder)
 
@@ -129,7 +156,8 @@ Analyze website performance and get Azion recommendations.
   "api_key": "your-pagespeed-api-key",
   "device": "mobile",
   "use_crux": true,
-  "weeks": 25
+  "weeks": 25,
+  "follow_redirects": false
 }
 ```
 
@@ -208,7 +236,11 @@ Interactive web interface for manual testing and configuration with enhanced fea
 
 **Key Features:**
 - 🔧 **Configuration Panel**: Easy form-based setup for URL, device type, and options
+- 🔄 **Follow URL Redirects**: Option to automatically follow HTTP redirects before analysis
 - 📋 **Request Format Examples**: Auto-generated cURL, JavaScript, and Python code samples
+- 📊 **Real-time Progress Tracking**: Dynamic progress bar with step-by-step logging
+- 📋 **Collapsible Log View**: Color-coded log entries (INFO, SUCCESS, WARNING, ERROR)
+- ⏱️ **Elapsed Time Tracking**: Analysis duration display in results header
 - 📄 **Expandable Full Response**: Collapsible section showing complete response data without truncation
 - 💾 **Smart Downloads**: Download buttons with real-time file size information
 - 📊 **Response Statistics**: Live file size and line count display
@@ -236,7 +268,8 @@ curl -X POST \
     "api_key": "your-api-key",
     "device": "mobile",
     "use_crux": true,
-    "weeks": 25
+    "weeks": 25,
+    "follow_redirects": false
   }' \
   http://localhost:3000/analyze
 ```
@@ -253,7 +286,8 @@ fetch('http://localhost:3000/analyze', {
     api_key: 'your-api-key',
     device: 'mobile',
     use_crux: true,
-    weeks: 25
+    weeks: 25,
+    follow_redirects: false
   })
 })
 .then(response => response.json())
@@ -270,7 +304,8 @@ data = {
     "api_key": "your-api-key",
     "device": "mobile",
     "use_crux": True,
-    "weeks": 25
+    "weeks": 25,
+    "follow_redirects": False
 }
 
 response = requests.post('http://localhost:3000/analyze', json=data)
@@ -323,22 +358,36 @@ print(result)
 
 ## 🏗️ Architecture
 
+The project follows a **modular, DRY (Don't Repeat Yourself) architecture** with shared utilities:
+
 ```
-typescript/
-├── src/
-│   ├── types/           # TypeScript interfaces and types
-│   ├── services/        # Core business logic services
-│   │   ├── analyzer.ts      # Main orchestration service
-│   │   ├── pagespeed.ts     # PageSpeed Insights integration
-│   │   ├── azion-solutions.ts # Azion solutions mapping
-│   │   ├── crux.ts          # CrUX data processing
-│   │   └── report-generator.ts # HTML report generation
-│   └── server.ts        # Express API server
-├── dist/               # Compiled JavaScript (generated)
-├── package.json        # Dependencies and scripts
-├── tsconfig.json       # TypeScript configuration
-└── README.md          # This file
+src/
+├── function/           # Edge function implementation
+│   └── index.ts           # Edge function handler
+├── services/           # Core business logic services
+│   ├── analyzer.ts         # Main orchestration service
+│   ├── pagespeed.ts        # PageSpeed Insights integration
+│   ├── azion-solutions.ts  # Azion solutions mapping
+│   ├── crux.ts             # CrUX data processing
+│   └── report-generator.ts # HTML report generation
+├── types/              # TypeScript interfaces and types
+│   ├── index.ts            # Main type definitions
+│   ├── event.ts            # Edge function event types
+│   └── global.d.ts         # Global declarations
+├── utils/              # Shared utilities (eliminates duplication)
+│   ├── validation.ts       # Unified request validation
+│   ├── error-handling.ts   # Standardized error responses
+│   ├── manual-interface-styles.ts # CSS styles
+│   └── manual-interface-template.ts # HTML/JS template
+└── server.ts           # Express API server (local development)
 ```
+
+### **Key Architectural Benefits:**
+- **🔄 No Code Duplication**: Shared utilities eliminate 1000+ lines of duplicated code
+- **🛡️ Type Safety**: Full TypeScript coverage with strict typing
+- **🎯 Single Source of Truth**: Manual interface, validation, and error handling centralized
+- **🚀 Dual Deployment**: Same codebase runs on Express.js and Azion Edge Functions
+- **🧩 Modular Design**: Easy to maintain, test, and extend individual components
 
 ## 🚦 Development
 

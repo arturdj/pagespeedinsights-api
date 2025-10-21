@@ -8,7 +8,10 @@
     "build": "tsc",
     "start": "node dist/src/server.js",
     "dev": "ts-node src/server.ts",
-    "clean": "rm -rf dist/",
+    "dev:edge": "azion dev",
+    "build:edge": "azion build",
+    "deploy": "azion deploy",
+    "clean": "rm -rf dist/ .edge/",
     "rebuild": "npm run clean && npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
