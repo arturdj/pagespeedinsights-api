@@ -131,10 +131,10 @@ export async function handleRequest({ request, args }: RequestContext): Promise<
 }
 
 function validateAnalysisRequest(requestData: any): { valid: boolean; error?: string; message?: string; data?: AnalysisRequest } {
-  const { url, device, use_crux, weeks, api_key } = requestData;
+  const { url, device, use_crux, weeks, api_key, follow_redirects } = requestData;
 
   // Use API key from environment variable or request body as fallback
-  const finalApiKey = process.env.PAGESPEED_INSIGHTS_API_KEY || api_key;
+  const finalApiKey = Azion.env.get('PAGESPEED_INSIGHTS_API_KEY') || api_key;
 
   // Validate required fields
   if (!finalApiKey) {
@@ -162,7 +162,8 @@ function validateAnalysisRequest(requestData: any): { valid: boolean; error?: st
       device: device || 'mobile',
       use_crux: use_crux || false,
       weeks: weeks || 25,
-      api_key: finalApiKey
+      api_key: finalApiKey,
+      follow_redirects: follow_redirects || false
     }
   };
 }
@@ -764,6 +765,17 @@ function handleManualInterface(corsHeaders: Record<string, string>): Response {
                         </div>
                     </div>
                     
+                    <div class="form-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="followRedirects" name="followRedirects">
+                            <label for="followRedirects">Follow URL Redirects</label>
+                        </div>
+                        
+                        <div style="color: #999; font-size: 11px; padding: 5px 0;">
+                            Automatically follow HTTP redirects before analysis
+                        </div>
+                    </div>
+                    
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             🚀 Execute Request
@@ -888,7 +900,8 @@ function handleManualInterface(corsHeaders: Record<string, string>): Response {
                 url: formData.get('url') || 'https://www.azion.com',
                 device: formData.get('device') || 'mobile',
                 use_crux: formData.get('useCrux') === 'on',
-                weeks: parseInt(formData.get('weeks')) || 25
+                weeks: parseInt(formData.get('weeks')) || 25,
+                follow_redirects: formData.get('followRedirects') === 'on'
             };
         }
         

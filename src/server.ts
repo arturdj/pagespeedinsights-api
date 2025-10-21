@@ -18,10 +18,10 @@ app.use(express.static('public'));
 
 // Validation middleware for analysis requests
 const validateAnalysisRequest = (req: any, res: any, next: any) => {
-  const { url, device, use_crux, weeks, api_key } = req.body;
+  const { url, device, use_crux, weeks, api_key, follow_redirects } = req.body;
 
   // Use API key from environment variable or request body as fallback
-  const finalApiKey = process.env.PAGESPEED_INSIGHTS_API_KEY || api_key;
+  const finalApiKey = Azion.env.get('PAGESPEED_INSIGHTS_API_KEY') || api_key;
 
   // Validate required fields
   if (!finalApiKey) {
@@ -46,7 +46,8 @@ const validateAnalysisRequest = (req: any, res: any, next: any) => {
     device: device || 'mobile',
     use_crux: use_crux || false,
     weeks: weeks || 25,
-    api_key: finalApiKey
+    api_key: finalApiKey,
+    follow_redirects: follow_redirects || false
   };
 
   next();
@@ -772,6 +773,17 @@ app.get('/manual', (req, res) => {
                         </div>
                     </div>
                     
+                    <div class="form-row">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="followRedirects" name="followRedirects">
+                            <label for="followRedirects">Follow URL Redirects</label>
+                        </div>
+                        
+                        <div style="color: #999; font-size: 11px; padding: 5px 0;">
+                            Automatically follow HTTP redirects before analysis
+                        </div>
+                    </div>
+                    
                     <div class="button-group">
                         <button type="submit" class="btn btn-primary" id="submitBtn">
                             🚀 Execute Request
@@ -830,11 +842,23 @@ app.get('/manual', (req, res) => {
         </div>
         
         <div class="result-section" id="result">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 class="result-header" style="margin: 0;">✅ Analysis Complete</h3>
-                <button class="btn btn-secondary" onclick="downloadResponse()" style="padding: 8px 16px; font-size: 12px;">
-                    📥 Download Results
-                </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;" id="resultHeader">
+                <div>
+                    <h3 class="result-header" style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                        ✅ Analysis Complete
+                        <span id="elapsedTimeDisplay" style="background: #0D0D0D; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #34A853; font-weight: normal; display: none;">
+                            ⏱️ <span id="elapsedTimeValue">0s</span>
+                        </span>
+                    </h3>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button onclick="copyToClipboard('responseData', this)" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
+                        📋 Copy
+                    </button>
+                    <button onclick="downloadCurrentResponse()" class="btn btn-primary" style="padding: 6px 12px; font-size: 12px; min-width: auto;">
+                        💾 Download
+                    </button>
+                </div>
             </div>
             
             <div id="summaryContent"></div>
@@ -860,7 +884,7 @@ app.get('/manual', (req, res) => {
                     <div class="code-container">
                         <div class="code-block">
                             <button class="copy-btn" onclick="copyToClipboard('responseData', this)">Copy</button>
-                            <button class="copy-btn" onclick="downloadResponse()" style="right: 60px; background: #4285F4;">Download</button>
+                            <button class="copy-btn download-btn" onclick="downloadCurrentResponse()" style="right: 60px; background: #4285F4;">Download</button>
                             <pre id="responseData"></pre>
                         </div>
                     </div>
@@ -921,7 +945,8 @@ app.get('/manual', (req, res) => {
                 url: formData.get('url') || 'https://www.azion.com',
                 device: formData.get('device') || 'mobile',
                 use_crux: formData.get('useCrux') === 'on',
-                weeks: parseInt(formData.get('weeks')) || 25
+                weeks: parseInt(formData.get('weeks')) || 25,
+                follow_redirects: formData.get('followRedirects') === 'on'
             };
         }
         
@@ -1114,17 +1139,31 @@ app.get('/manual', (req, res) => {
                 const elapsedSeconds = Math.floor(elapsed / 1000);
                 const estimatedTotal = 120;
                 
-                // Update progress based on time and steps
-                if (stepIndex < progressSteps.length) {
+                // Calculate time-based progress (0-100%)
+                const timeProgress = Math.min((elapsed / maxTime) * 100, 98);
+                
+                // Update step and text based on elapsed time
+                while (stepIndex < progressSteps.length) {
                     const currentStep = progressSteps[stepIndex];
-                    const timeProgress = (elapsed / maxTime) * 100;
                     
-                    if (timeProgress >= currentStep.progress || elapsedSeconds > stepIndex * 15) {
-                        progress = currentStep.progress;
+                    if (elapsedSeconds >= (stepIndex + 1) * 15 || timeProgress >= currentStep.progress) {
                         progressText.textContent = currentStep.text;
                         stepIndex++;
+                    } else {
+                        break;
                     }
                 }
+                
+                // Use the higher of time-based progress or step-based progress
+                if (stepIndex > 0) {
+                    const currentStepProgress = progressSteps[Math.min(stepIndex - 1, progressSteps.length - 1)].progress;
+                    progress = Math.max(timeProgress, currentStepProgress);
+                } else {
+                    progress = timeProgress;
+                }
+                
+                // Ensure progress doesn't exceed 98% until completion
+                progress = Math.min(progress, 98);
                 
                 progressBar.style.width = progress + '%';
                 progressTime.textContent = \`Elapsed: \${elapsedSeconds}s / Est. \${estimatedTotal}s\`;
@@ -1148,8 +1187,11 @@ app.get('/manual', (req, res) => {
         let currentResponseData = null;
         let currentEndpointType = 'analyze';
         let currentUrl = '';
+        let analysisStartTime = null;
+        let analysisElapsedTime = 0;
         
-        function downloadResponse() {
+        // Unified download function that works with any response data
+        function downloadCurrentResponse() {
             const responseData = document.getElementById('responseData').textContent;
             if (!responseData) {
                 alert('No response data to download');
@@ -1193,12 +1235,135 @@ app.get('/manual', (req, res) => {
             URL.revokeObjectURL(url);
         }
         
+        // Ensure Copy and Download buttons are always present
+        function ensureResponseButtons() {
+            const codeBlock = document.querySelector('.code-block');
+            if (!codeBlock) return;
+            
+            // Remove existing buttons to avoid duplicates
+            const existingButtons = codeBlock.querySelectorAll('.copy-btn, .download-btn');
+            existingButtons.forEach(btn => btn.remove());
+            
+            // Add Copy button
+            const copyBtn = document.createElement('button');
+            copyBtn.className = 'copy-btn';
+            copyBtn.onclick = function() { copyToClipboard('responseData', this); };
+            copyBtn.textContent = 'Copy';
+            copyBtn.style.cssText = 'position: absolute; top: 10px; right: 10px; padding: 5px 10px; background: #F3652B; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
+            
+            // Add Download button
+            const downloadBtn = document.createElement('button');
+            downloadBtn.className = 'copy-btn download-btn';
+            downloadBtn.onclick = downloadCurrentResponse;
+            downloadBtn.textContent = 'Download';
+            downloadBtn.style.cssText = 'position: absolute; top: 10px; right: 70px; padding: 5px 10px; background: #4285F4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px;';
+            
+            // Insert buttons before the pre element
+            const preElement = codeBlock.querySelector('pre');
+            if (preElement) {
+                codeBlock.insertBefore(copyBtn, preElement);
+                codeBlock.insertBefore(downloadBtn, preElement);
+            }
+        }
+        
+        // Modular Result Display Components
+        
+        // Create unified results header with elapsed time and action buttons
+        function createResultsHeader(title, elapsedTime) {
+            const formattedTime = elapsedTime < 60 ? 
+                elapsedTime + 's' : 
+                Math.floor(elapsedTime / 60) + 'm ' + (elapsedTime % 60) + 's';
+            
+            return {
+                title: title,
+                formattedTime: formattedTime
+            };
+        }
+        
+        // Create summary grid component
+        function createSummaryGrid(items) {
+            const summaryItems = items.map(item => 
+                '<div class="summary-item">' +
+                    '<div class="summary-value" style="color: ' + (item.color || '#F3652B') + ';">' + item.value + '</div>' +
+                    '<div class="summary-label">' + item.label + '</div>' +
+                '</div>'
+            ).join('');
+            
+            return '<div class="summary-grid">' + summaryItems + '</div>';
+        }
+        
+        // Create download actions component
+        function createDownloadActions(downloads) {
+            const downloadLinks = downloads.map(download => 
+                '<a href="' + download.url + '" download="' + download.filename + '" class="report-link" ' +
+                   'style="background: ' + (download.color || 'linear-gradient(135deg, #1976D2 0%, #2196F3 100%)') + ';">' +
+                    (download.icon || '💾') + ' ' + download.text + ' (' + download.size + ')' +
+                '</a>'
+            ).join('');
+            
+            return '<div class="report-actions">' + downloadLinks + '</div>';
+        }
+        
+        // Create result content component
+        function createResultContent(config) {
+            let content = '';
+            
+            // Add summary grid if provided
+            if (config.summaryItems && config.summaryItems.length > 0) {
+                content += createSummaryGrid(config.summaryItems);
+            }
+            
+            // Add main content
+            content += '<div style="text-align: center; margin-top: 20px;">' +
+                '<h4 style="color: #F3652B; margin-bottom: 10px;">' + config.title + '</h4>' +
+                '<p style="color: #CCC; margin-bottom: 15px;">' +
+                    config.subtitle + ' <strong style="color: #F3652B;">' + config.url + '</strong> ' +
+                    'on <strong>' + config.device + '</strong> device.' +
+                '</p>';
+            
+            // Add download actions if provided
+            if (config.downloads && config.downloads.length > 0) {
+                content += createDownloadActions(config.downloads);
+            }
+            
+            // Add additional info sections
+            if (config.additionalInfo) {
+                content += config.additionalInfo;
+            }
+            
+            // Add description
+            if (config.description) {
+                content += '<p style="color: #999; font-size: 12px; margin-top: 15px;">' +
+                    config.description +
+                '</p>';
+            }
+            
+            content += '</div>';
+            return content;
+        }
+        
+        // Update elapsed time display
+        function updateElapsedTimeDisplay(elapsedSeconds) {
+            const elapsedTimeDisplay = document.getElementById('elapsedTimeDisplay');
+            const elapsedTimeValue = document.getElementById('elapsedTimeValue');
+            
+            if (elapsedTimeDisplay && elapsedTimeValue) {
+                const formattedTime = elapsedSeconds < 60 ? 
+                    elapsedSeconds + 's' : 
+                    Math.floor(elapsedSeconds / 60) + 'm ' + (elapsedSeconds % 60) + 's';
+                
+                elapsedTimeValue.textContent = formattedTime;
+                elapsedTimeDisplay.style.display = 'inline-block';
+            }
+        }
+
         async function performAnalysis(endpoint, endpointType) {
             const data = getCurrentRequestData();
             
             // Update global variables for download functionality
             currentEndpointType = endpointType;
             currentUrl = data.url;
+            analysisStartTime = Date.now();
             
             // Hide previous results
             error.style.display = 'none';
@@ -1258,47 +1423,62 @@ app.get('/manual', (req, res) => {
             loading.style.display = 'none';
             result.classList.add('show');
             
+            // Calculate elapsed time
+            analysisElapsedTime = Math.round((Date.now() - analysisStartTime) / 1000);
+            updateElapsedTimeDisplay(analysisElapsedTime);
+            
             // Create a blob URL for the HTML content
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const reportUrl = URL.createObjectURL(blob);
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = \`pagespeed-report-\${requestData.url.replace(/[^a-zA-Z0-9]/g, '-')}-\${timestamp}.html\`;
+            const filename = 'pagespeed-report-' + requestData.url.replace(/[^a-zA-Z0-9]/g, '-') + '-' + timestamp + '.html';
             
             // Calculate file size
             const sizeInBytes = blob.size;
             const sizeInKB = (sizeInBytes / 1024).toFixed(1);
             const sizeInMB = sizeInBytes > 1024 * 1024 ? (sizeInBytes / (1024 * 1024)).toFixed(1) + ' MB' : sizeInKB + ' KB';
             
-            // Display HTML report result
-            document.getElementById('summaryContent').innerHTML = \`
-                <div style="text-align: center; padding: 20px;">
-                    <h4 style="color: #34A853; margin-bottom: 15px;">📄 HTML Report Generated Successfully!</h4>
-                    <p style="color: #CCC; margin-bottom: 20px;">
-                        Report generated for <strong style="color: #F3652B;">\${requestData.url}</strong> 
-                        on <strong>\${requestData.device}</strong> device.
-                    </p>
-                    <div class="report-actions">
-                        <a href="\${reportUrl}" target="_blank" class="report-link">
-                            🔗 Open Report in New Tab
-                        </a>
-                        <a href="\${reportUrl}" download="\${filename}" class="report-link" style="background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);">
-                            💾 Download Report (\${sizeInMB})
-                        </a>
-                    </div>
-                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
-                        The report contains detailed performance analysis, recommendations, and interactive charts.
-                    </p>
-                </div>
-            \`;
+            // Use modular components to create result content
+            const config = {
+                title: '📄 HTML Report Generated Successfully!',
+                subtitle: 'Report generated for',
+                url: requestData.url,
+                device: requestData.device,
+                downloads: [
+                    {
+                        url: reportUrl,
+                        filename: filename,
+                        text: '🔗 Open Report in New Tab',
+                        size: sizeInMB,
+                        color: 'linear-gradient(135deg, #34A853 0%, #4CAF50 100%)'
+                    },
+                    {
+                        url: reportUrl,
+                        filename: filename,
+                        text: 'Download Report',
+                        size: sizeInMB,
+                        color: 'linear-gradient(135deg, #1976D2 0%, #2196F3 100%)',
+                        icon: '💾'
+                    }
+                ],
+                description: 'The report contains detailed performance analysis, recommendations, and interactive charts.'
+            };
+            
+            document.getElementById('summaryContent').innerHTML = createResultContent(config);
             
             // Show the full HTML content in the response section
             document.getElementById('responseData').textContent = htmlContent;
             updateResponseStats(htmlContent);
+            ensureResponseButtons();
         }
         
         function displayFullAnalysisResult(responseData, requestData) {
             loading.style.display = 'none';
             result.classList.add('show');
+            
+            // Calculate elapsed time
+            analysisElapsedTime = Math.round((Date.now() - analysisStartTime) / 1000);
+            updateElapsedTimeDisplay(analysisElapsedTime);
             
             // Create downloadable JSON file
             const jsonBlob = new Blob([JSON.stringify(responseData, null, 2)], { type: 'application/json' });
@@ -1309,8 +1489,8 @@ app.get('/manual', (req, res) => {
             const htmlUrl = URL.createObjectURL(htmlBlob);
             
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const jsonFilename = \`pagespeed-full-analysis-\${responseData.url.replace(/[^a-zA-Z0-9]/g, '-')}-\${timestamp}.json\`;
-            const htmlFilename = \`pagespeed-report-\${responseData.url.replace(/[^a-zA-Z0-9]/g, '-')}-\${timestamp}.html\`;
+            const jsonFilename = 'pagespeed-full-analysis-' + responseData.url.replace(/[^a-zA-Z0-9]/g, '-') + '-' + timestamp + '.json';
+            const htmlFilename = 'pagespeed-report-' + responseData.url.replace(/[^a-zA-Z0-9]/g, '-') + '-' + timestamp + '.html';
             
             // Calculate file sizes
             const jsonSizeInBytes = jsonBlob.size;
@@ -1323,56 +1503,61 @@ app.get('/manual', (req, res) => {
             
             // Summary for full analysis
             const summary = responseData.azion_recommendations.marketing_data.summary;
-            document.getElementById('summaryContent').innerHTML = \`
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-value">\${summary.total_issues}</div>
-                        <div class="summary-label">Total Issues</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #EA4335;">\${summary.high_priority_issues}</div>
-                        <div class="summary-label">High Priority</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #34A853;">\${responseData.azion_recommendations.solution_count}</div>
-                        <div class="summary-label">Azion Solutions</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <h4 style="color: #F3652B; margin-bottom: 10px;">📊 Full Analysis Complete!</h4>
-                    <p style="color: #CCC; margin-bottom: 15px;">
-                        Combined JSON analysis and HTML report for <strong style="color: #F3652B;">\${responseData.url}</strong> 
-                        on <strong>\${responseData.device}</strong> device.
-                    </p>
-                    <div class="report-actions">
-                        <a href="\${jsonUrl}" download="\${jsonFilename}" class="report-link" style="background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);">
-                            💾 Download Full JSON (\${jsonSizeFormatted})
-                        </a>
-                        <a href="\${htmlUrl}" download="\${htmlFilename}" class="report-link" style="background: linear-gradient(135deg, #34A853 0%, #4CAF50 100%);">
-                            📄 Download HTML Report (\${htmlSizeFormatted})
-                        </a>
-                    </div>
-                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
-                        This response includes both the complete JSON analysis data and the HTML report in the 'html_report' field.
-                    </p>
-                </div>
-            \`;
+            
+            // Use modular components to create result content
+            const config = {
+                title: '📊 Full Analysis Complete!',
+                subtitle: 'Combined JSON analysis and HTML report for',
+                url: responseData.url,
+                device: responseData.device,
+                summaryItems: [
+                    { value: summary.total_issues, label: 'Total Issues' },
+                    { value: summary.high_priority_issues, label: 'High Priority', color: '#EA4335' },
+                    { value: responseData.azion_recommendations.solution_count, label: 'Azion Solutions', color: '#34A853' }
+                ],
+                downloads: [
+                    {
+                        url: jsonUrl,
+                        filename: jsonFilename,
+                        text: 'Download Full JSON',
+                        size: jsonSizeFormatted,
+                        color: 'linear-gradient(135deg, #1976D2 0%, #2196F3 100%)',
+                        icon: '💾'
+                    },
+                    {
+                        url: htmlUrl,
+                        filename: htmlFilename,
+                        text: 'Download HTML Report',
+                        size: htmlSizeFormatted,
+                        color: 'linear-gradient(135deg, #34A853 0%, #4CAF50 100%)',
+                        icon: '📄'
+                    }
+                ],
+                description: 'This response includes both the complete JSON analysis data and the HTML report in the \'html_report\' field.'
+            };
+            
+            document.getElementById('summaryContent').innerHTML = createResultContent(config);
             
             // Show full JSON response without truncation
             const jsonString = JSON.stringify(responseData, null, 2);
             document.getElementById('responseData').textContent = jsonString;
             updateResponseStats(jsonString);
+            ensureResponseButtons();
         }
         
         function displayHtmlJsonResult(responseData, requestData) {
             loading.style.display = 'none';
             result.classList.add('show');
             
+            // Calculate elapsed time
+            analysisElapsedTime = Math.round((Date.now() - analysisStartTime) / 1000);
+            updateElapsedTimeDisplay(analysisElapsedTime);
+            
             // Create downloadable JSON file
             const jsonBlob = new Blob([JSON.stringify(responseData, null, 2)], { type: 'application/json' });
             const jsonUrl = URL.createObjectURL(jsonBlob);
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = \`pagespeed-structured-data-\${responseData.url.replace(/[^a-zA-Z0-9]/g, '-')}-\${timestamp}.json\`;
+            const filename = 'pagespeed-structured-data-' + responseData.url.replace(/[^a-zA-Z0-9]/g, '-') + '-' + timestamp + '.json';
             
             // Calculate file size
             const sizeInBytes = jsonBlob.size;
@@ -1383,72 +1568,68 @@ app.get('/manual', (req, res) => {
             const reportData = responseData.report_data;
             const optimizationSummary = reportData.optimization_summary;
             
-            document.getElementById('summaryContent').innerHTML = \`
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-value">\${reportData.overall_score.value}</div>
-                        <div class="summary-label">Overall Score</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #EA4335;">\${optimizationSummary.total_issues}</div>
-                        <div class="summary-label">Total Issues</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #FBBC04;">\${optimizationSummary.high_priority_issues}</div>
-                        <div class="summary-label">High Priority</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #34A853;">\${optimizationSummary.azion_solutions_count}</div>
-                        <div class="summary-label">Azion Solutions</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #1976D2;">\${reportData.categories.length}</div>
-                        <div class="summary-label">Categories</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <h4 style="color: #F3652B; margin-bottom: 10px;">📋 Structured Report Data Complete!</h4>
-                    <p style="color: #CCC; margin-bottom: 15px;">
-                        Structured data values for <strong style="color: #F3652B;">\${responseData.url}</strong> 
-                        on <strong>\${responseData.device}</strong> device.
-                    </p>
-                    <div class="report-actions">
-                        <a href="\${jsonUrl}" download="\${filename}" class="report-link" style="background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);">
-                            💾 Download Structured Data (\${sizeFormatted})
-                        </a>
-                    </div>
-                    <div style="background: #0D0D0D; padding: 15px; border-radius: 8px; margin: 15px 0;">
-                        <h5 style="color: #34A853; margin-bottom: 10px;">📊 Data Structure Overview</h5>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 12px;">
-                            <div style="color: #CCC;">• Header information</div>
-                            <div style="color: #CCC;">• Overall & category scores</div>
-                            <div style="color: #CCC;">• Optimization summary</div>
-                            <div style="color: #CCC;">• Detailed recommendations</div>
-                            <div style="color: #CCC;">• Console errors data</div>
-                            <div style="color: #CCC;">• CrUX metrics (if available)</div>
-                        </div>
-                    </div>
-                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
-                        JSON response contains all structured data values used to populate the HTML report for programmatic access.
-                    </p>
-                </div>
-            \`;
+            // Additional info section
+            const additionalInfo = '<div style="background: #0D0D0D; padding: 15px; border-radius: 8px; margin: 15px 0;">' +
+                '<h5 style="color: #34A853; margin-bottom: 10px;">📊 Data Structure Overview</h5>' +
+                '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 12px;">' +
+                    '<div style="color: #CCC;">• Header information</div>' +
+                    '<div style="color: #CCC;">• Overall & category scores</div>' +
+                    '<div style="color: #CCC;">• Optimization summary</div>' +
+                    '<div style="color: #CCC;">• Detailed recommendations</div>' +
+                    '<div style="color: #CCC;">• Console errors data</div>' +
+                    '<div style="color: #CCC;">• CrUX metrics (if available)</div>' +
+                '</div>' +
+            '</div>';
+            
+            // Use modular components to create result content
+            const config = {
+                title: '📋 Structured Report Data Complete!',
+                subtitle: 'Structured data values for',
+                url: responseData.url,
+                device: responseData.device,
+                summaryItems: [
+                    { value: reportData.overall_score.value, label: 'Overall Score' },
+                    { value: optimizationSummary.total_issues, label: 'Total Issues', color: '#EA4335' },
+                    { value: optimizationSummary.high_priority_issues, label: 'High Priority', color: '#FBBC04' },
+                    { value: optimizationSummary.azion_solutions_count, label: 'Azion Solutions', color: '#34A853' },
+                    { value: reportData.categories.length, label: 'Categories', color: '#1976D2' }
+                ],
+                downloads: [
+                    {
+                        url: jsonUrl,
+                        filename: filename,
+                        text: 'Download Structured Data',
+                        size: sizeFormatted,
+                        color: 'linear-gradient(135deg, #1976D2 0%, #2196F3 100%)',
+                        icon: '💾'
+                    }
+                ],
+                additionalInfo: additionalInfo,
+                description: 'JSON response contains all structured data values used to populate the HTML report for programmatic access.'
+            };
+            
+            document.getElementById('summaryContent').innerHTML = createResultContent(config);
             
             // Show full JSON response without truncation
             const jsonString = JSON.stringify(responseData, null, 2);
             document.getElementById('responseData').textContent = jsonString;
             updateResponseStats(jsonString);
+            ensureResponseButtons();
         }
         
         function displayResults(responseData, requestData) {
             loading.style.display = 'none';
             result.classList.add('show');
             
+            // Calculate elapsed time
+            analysisElapsedTime = Math.round((Date.now() - analysisStartTime) / 1000);
+            updateElapsedTimeDisplay(analysisElapsedTime);
+            
             // Create downloadable JSON file
             const jsonBlob = new Blob([JSON.stringify(responseData, null, 2)], { type: 'application/json' });
             const jsonUrl = URL.createObjectURL(jsonBlob);
             const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-            const filename = \`pagespeed-analysis-\${responseData.url.replace(/[^a-zA-Z0-9]/g, '-')}-\${timestamp}.json\`;
+            const filename = 'pagespeed-analysis-' + responseData.url.replace(/[^a-zA-Z0-9]/g, '-') + '-' + timestamp + '.json';
             
             // Calculate file size
             const sizeInBytes = jsonBlob.size;
@@ -1457,42 +1638,38 @@ app.get('/manual', (req, res) => {
             
             // Summary
             const summary = responseData.azion_recommendations.marketing_data.summary;
-            document.getElementById('summaryContent').innerHTML = \`
-                <div class="summary-grid">
-                    <div class="summary-item">
-                        <div class="summary-value">\${summary.total_issues}</div>
-                        <div class="summary-label">Total Issues</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #EA4335;">\${summary.high_priority_issues}</div>
-                        <div class="summary-label">High Priority</div>
-                    </div>
-                    <div class="summary-item">
-                        <div class="summary-value" style="color: #34A853;">\${responseData.azion_recommendations.solution_count}</div>
-                        <div class="summary-label">Azion Solutions</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 20px;">
-                    <h4 style="color: #F3652B; margin-bottom: 10px;">🔍 JSON Analysis Complete!</h4>
-                    <p style="color: #CCC; margin-bottom: 15px;">
-                        Analysis completed for <strong style="color: #F3652B;">\${responseData.url}</strong> 
-                        on <strong>\${responseData.device}</strong> device.
-                    </p>
-                    <div class="report-actions">
-                        <a href="\${jsonUrl}" download="\${filename}" class="report-link" style="background: linear-gradient(135deg, #1976D2 0%, #2196F3 100%);">
-                            💾 Download JSON Analysis (\${sizeFormatted})
-                        </a>
-                    </div>
-                    <p style="color: #999; font-size: 12px; margin-top: 15px;">
-                        Complete JSON analysis with recommendations and Azion solutions.
-                    </p>
-                </div>
-            \`;
+            
+            // Use modular components to create result content
+            const config = {
+                title: '🔍 JSON Analysis Complete!',
+                subtitle: 'Analysis completed for',
+                url: responseData.url,
+                device: responseData.device,
+                summaryItems: [
+                    { value: summary.total_issues, label: 'Total Issues' },
+                    { value: summary.high_priority_issues, label: 'High Priority', color: '#EA4335' },
+                    { value: responseData.azion_recommendations.solution_count, label: 'Azion Solutions', color: '#34A853' }
+                ],
+                downloads: [
+                    {
+                        url: jsonUrl,
+                        filename: filename,
+                        text: 'Download JSON Analysis',
+                        size: sizeFormatted,
+                        color: 'linear-gradient(135deg, #1976D2 0%, #2196F3 100%)',
+                        icon: '💾'
+                    }
+                ],
+                description: 'Complete JSON analysis with recommendations and Azion solutions.'
+            };
+            
+            document.getElementById('summaryContent').innerHTML = createResultContent(config);
             
             // Full response without truncation
             const jsonString = JSON.stringify(responseData, null, 2);
             document.getElementById('responseData').textContent = jsonString;
             updateResponseStats(jsonString);
+            ensureResponseButtons();
         }
     </script>
 </body>
@@ -1516,7 +1693,8 @@ app.get('/docs', (req, res) => {
           api_key: 'string (optional) - PageSpeed Insights API key (uses PAGESPEED_INSIGHTS_API_KEY env var if not provided)',
           device: 'string (optional) - mobile|desktop|tablet (default: mobile)',
           use_crux: 'boolean (optional) - Include CrUX history data (default: false)',
-          weeks: 'number (optional) - CrUX history weeks 1-40 (default: 25)'
+          weeks: 'number (optional) - CrUX history weeks 1-40 (default: 25)',
+          follow_redirects: 'boolean (optional) - Follow HTTP redirects before analysis (default: false)'
         },
         response: 'JSON object with analysis results, recommendations, and HTML report'
       },
@@ -1555,7 +1733,8 @@ app.get('/docs', (req, res) => {
     "url": "example.com",
     "device": "mobile",
     "use_crux": true,
-    "weeks": 25
+    "weeks": 25,
+    "follow_redirects": true
   }' \\
   ${req.protocol}://${req.get('host')}/analyze`,
       
@@ -1568,7 +1747,8 @@ app.get('/docs', (req, res) => {
     url: 'example.com',
     device: 'mobile',
     use_crux: true,
-    weeks: 25
+    weeks: 25,
+    follow_redirects: true
   })
 })
 .then(response => response.json())

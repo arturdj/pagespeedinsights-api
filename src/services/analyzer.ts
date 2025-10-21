@@ -18,7 +18,7 @@ export class AnalyzerService {
   }
 
   async analyzeWebsite(request: AnalysisRequest): Promise<AnalysisResponse> {
-    const { url, device = 'mobile', use_crux = false, weeks = 25, api_key } = request;
+    const { url, device = 'mobile', use_crux = false, weeks = 25, api_key, follow_redirects = false } = request;
     
     if (!api_key) {
       throw new Error('API key is required for analysis');
@@ -27,10 +27,16 @@ export class AnalyzerService {
     // Starting analysis
     
     try {
+      // Follow redirects if requested
+      let finalUrl = url;
+      if (follow_redirects) {
+        finalUrl = await this.followRedirects(url);
+      }
+      
       // Get PageSpeed Insights data
       const pagespeedData = await this.pageSpeedService.getPageSpeedInsights(
         api_key, 
-        url, 
+        finalUrl, 
         device as 'mobile' | 'desktop'
       );
 
@@ -52,7 +58,7 @@ export class AnalyzerService {
         // Fetching CrUX History data
         const formFactor = device === 'mobile' ? 'PHONE' : device === 'desktop' ? 'DESKTOP' : 'TABLET';
         
-        const cruxRawData = await this.cruxService.getCrUXHistory(api_key, url, formFactor, weeks);
+        const cruxRawData = await this.cruxService.getCrUXHistory(api_key, finalUrl, formFactor, weeks);
         const pagespeedCoreVitals = this.cruxService.extractPageSpeedCoreVitals(pagespeedData);
         cruxData = this.cruxService.processCrUXData(cruxRawData, pagespeedCoreVitals);
 
@@ -71,7 +77,7 @@ export class AnalyzerService {
       
       // HTML Report
       const htmlReport = this.reportGeneratorService.generateUnifiedHtmlReport(
-        url, 
+        finalUrl, 
         analysis, 
         azionRecommendations, 
         timestamp, 
@@ -80,12 +86,13 @@ export class AnalyzerService {
       );
 
       // Generate marketing pitch
-      const marketingPitch = this.formatMarketingPitch(azionRecommendations.marketing_data, url);
+      const marketingPitch = this.formatMarketingPitch(azionRecommendations.marketing_data, finalUrl);
 
       // Analysis complete
 
       return {
         url,
+        final_url: follow_redirects && finalUrl !== url ? finalUrl : undefined,
         device,
         timestamp,
         analysis,
@@ -173,5 +180,53 @@ export class AnalyzerService {
     } catch (error) {
       throw new Error('Invalid URL format');
     }
+  }
+
+  private async followRedirects(url: string, maxRedirects: number = 10): Promise<string> {
+    let currentUrl = url;
+    let redirectCount = 0;
+    
+    while (redirectCount < maxRedirects) {
+      try {
+        const response = await fetch(currentUrl, {
+          method: 'HEAD',
+          redirect: 'manual'
+        });
+        
+        // If it's a redirect status code (3xx)
+        if (response.status >= 300 && response.status < 400) {
+          const location = response.headers.get('location');
+          if (!location) {
+            throw new Error('Redirect response missing Location header');
+          }
+          
+          // Handle relative URLs
+          if (location.startsWith('/')) {
+            const baseUrl = new URL(currentUrl);
+            currentUrl = `${baseUrl.protocol}//${baseUrl.host}${location}`;
+          } else if (location.startsWith('http')) {
+            currentUrl = location;
+          } else {
+            // Handle relative paths
+            const baseUrl = new URL(currentUrl);
+            currentUrl = new URL(location, baseUrl).href;
+          }
+          
+          redirectCount++;
+          continue;
+        }
+        
+        // Not a redirect, return current URL
+        return currentUrl;
+        
+      } catch (error) {
+        if (error instanceof TypeError && error.message.includes('fetch')) {
+          throw new Error(`Failed to follow redirects: Network error for ${currentUrl}`);
+        }
+        throw new Error(`Failed to follow redirects: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+    
+    throw new Error(`Too many redirects (${maxRedirects}) when following ${url}`);
   }
 }

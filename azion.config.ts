@@ -24,13 +24,13 @@ export default {
   },
   functions: [
     {
-      name: '$FUNCTION_NAME',
+      name: 'az-psi-analyzer',
       path: './functions/index.js'
     }
   ],
   applications: [
     {
-      name: '$APPLICATION_NAME',
+      name: 'az-psi-analyzer',
       rules: {
         request: [
           {
@@ -51,7 +51,7 @@ export default {
               {
                 type: 'run_function',
                 attributes: {
-                  value: '$FUNCTION_NAME'
+                  value: 'az-psi-analyzer'
                 }
               }
             ]
@@ -60,15 +60,15 @@ export default {
       },
       functionsInstances: [
         {
-          name: '$FUNCTION_INSTANCE_NAME',
-          ref: '$FUNCTION_NAME'
+          name: 'az-psi-analyzer',
+          ref: 'az-psi-analyzer'
         }
       ]
     }
   ],
   workloads: [
     {
-      name: '$WORKLOAD_NAME',
+      name: 'az-psi-analyzer',
       active: true,
       infrastructure: 1,
       protocols: {
@@ -81,13 +81,13 @@ export default {
       },
       deployments: [
         {
-          name: '$DEPLOYMENT_NAME',
+          name: 'az-psi-analyzer',
           current: true,
           active: true,
           strategy: {
             type: 'default',
             attributes: {
-              application: '$APPLICATION_NAME'
+              application: 'az-psi-analyzer'
             }
           }
         }

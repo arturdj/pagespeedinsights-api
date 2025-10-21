@@ -194,10 +194,12 @@ export interface AnalysisRequest {
   use_crux?: boolean;
   weeks?: number;
   api_key?: string;
+  follow_redirects?: boolean;
 }
 
 export interface AnalysisResponse {
   url: string;
+  final_url?: string;
   device: string;
   timestamp: string;
   analysis: AnalysisResult;
