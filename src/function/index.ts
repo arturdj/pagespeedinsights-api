@@ -94,8 +94,8 @@ export async function handleRequest({ request, args }: RequestContext): Promise<
           return handleReportEndpoint(analysisRequest, corsHeaders);
         case '/full':
           return handleFullEndpoint(analysisRequest, corsHeaders);
-        case '/html-json':
-          return handleHtmlJsonEndpoint(analysisRequest, corsHeaders);
+        case '/solutions':
+          return handleSolutionsEndpoint(analysisRequest, corsHeaders);
         default:
           return createErrorResponseObject(
             ErrorCodes.NOT_FOUND,
@@ -137,9 +137,10 @@ async function handleAnalyzeEndpoint(analysisRequest: AnalysisRequest, corsHeade
   try {
     const result = await analyzerService.analyzeWebsite(analysisRequest);
     
-    // Remove sensitive data from response
+    // Remove sensitive data and HTML report from response (analyze endpoint returns JSON data only)
     const response = { ...result };
     delete (response as any).api_key;
+    delete (response as any).html_report;
 
     return new Response(
       JSON.stringify(response),
@@ -207,46 +208,180 @@ async function handleFullEndpoint(analysisRequest: AnalysisRequest, corsHeaders:
   }
 }
 
-async function handleHtmlJsonEndpoint(analysisRequest: AnalysisRequest, corsHeaders: Record<string, string>): Promise<Response> {
+
+async function handleSolutionsEndpoint(analysisRequest: AnalysisRequest, corsHeaders: Record<string, string>): Promise<Response> {
   try {
     const result = await analyzerService.analyzeWebsite(analysisRequest);
     
-    // Extract structured data that populates the HTML report
+    // Extract analysis and recommendations
     const analysis = result.analysis;
     const azionRecommendations = result.azion_recommendations;
     
-    // Calculate overall score
+    // Calculate performance metrics
     const scores = Object.values(analysis).map((cat: any) => cat.score).filter(score => score !== undefined);
-    const overallScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+    const overallScore = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
     
-    // Count issues by priority
-    const highPriorityIssues = Object.values(analysis)
-      .flatMap((cat: any) => cat.issues)
-      .filter((issue: any) => issue.impact === 'high').length;
+    // Categorize issues by priority and impact
+    const allIssues = Object.values(analysis).flatMap((cat: any) => cat.issues || []);
+    const issuesByPriority = {
+      high: allIssues.filter((issue: any) => issue.impact === 'high'),
+      medium: allIssues.filter((issue: any) => issue.impact === 'medium'),
+      low: allIssues.filter((issue: any) => issue.impact === 'low')
+    };
 
-    // Create structured response
-    const htmlJsonResponse = {
-      url: result.url,
-      final_url: result.final_url,
-      device: result.device,
-      timestamp: result.timestamp,
-      analysis: result.analysis,
-      azion_recommendations: result.azion_recommendations,
-      crux_data: result.crux_data,
-      html_report: result.html_report,
-      marketing_pitch: result.marketing_pitch,
-      report_data: {
-        overall_score: Math.round(overallScore),
-        optimization_summary: {
-          total_issues: Object.values(analysis).reduce((sum: number, cat: any) => sum + (cat.issues?.length || 0), 0),
-          high_priority_issues: highPriorityIssues,
-          azion_solutions: azionRecommendations?.solution_count || 0
+    // Create structured solutions response optimized for LLMs and tools
+    const solutionsResponse = {
+      metadata: {
+        url: result.url,
+        final_url: result.final_url,
+        device: result.device,
+        analysis_timestamp: result.timestamp,
+        overall_performance_score: overallScore,
+        total_issues_detected: allIssues.length,
+        api_version: "3.0.0"
+      },
+      
+      performance_assessment: {
+        scores_by_category: {
+          performance: analysis.performance?.score || 0,
+          accessibility: analysis.accessibility?.score || 0,
+          best_practices: analysis.best_practices?.score || 0,
+          seo: analysis.seo?.score || 0
+        },
+        
+        issues_breakdown: {
+          high_priority: {
+            count: issuesByPriority.high.length,
+            issues: issuesByPriority.high.map((issue: any) => ({
+              id: issue.id,
+              title: issue.title,
+              description: issue.description,
+              impact_score: issue.score,
+              potential_savings: issue.display_value,
+              category: getCategoryForIssue(issue.id, analysis)
+            }))
+          },
+          medium_priority: {
+            count: issuesByPriority.medium.length,
+            issues: issuesByPriority.medium.map((issue: any) => ({
+              id: issue.id,
+              title: issue.title,
+              description: issue.description,
+              impact_score: issue.score,
+              potential_savings: issue.display_value,
+              category: getCategoryForIssue(issue.id, analysis)
+            }))
+          },
+          low_priority: {
+            count: issuesByPriority.low.length,
+            issues: issuesByPriority.low.map((issue: any) => ({
+              id: issue.id,
+              title: issue.title,
+              description: issue.description,
+              impact_score: issue.score,
+              potential_savings: issue.display_value,
+              category: getCategoryForIssue(issue.id, analysis)
+            }))
+          }
         }
+      },
+
+      azion_solutions: {
+        summary: {
+          total_applicable_solutions: azionRecommendations?.solution_count || 0,
+          estimated_impact: azionRecommendations?.marketing_data?.summary?.estimated_impact || 'medium',
+          implementation_priority: getImplementationPriority(issuesByPriority)
+        },
+        
+        recommended_products: Object.values(azionRecommendations?.marketing_data?.solutions_overview || {}).map((solution: any) => ({
+          id: solution.id,
+          name: solution.name,
+          description: solution.description,
+          key_features: solution.features,
+          business_benefits: solution.benefits,
+          documentation_url: solution.url,
+          applicable_issues: getApplicableIssuesForSolution(solution.id, azionRecommendations)
+        })),
+
+        implementation_roadmap: azionRecommendations?.marketing_data?.action_plan?.map((action: any, index: number) => ({
+          step: index + 1,
+          title: action.title,
+          description: action.description,
+          priority: action.priority,
+          category: action.category,
+          estimated_savings: action.potential_savings,
+          recommended_azion_products: action.recommended_solutions,
+          implementation_complexity: action.implementation_complexity,
+          technical_context: {
+            current_performance_impact: action.pagespeed_insights_context?.current_value || '',
+            performance_score: action.pagespeed_insights_context?.score || 0,
+            technical_details: action.pagespeed_insights_context?.original_description || ''
+          }
+        })) || []
+      },
+
+      optimization_insights: {
+        quick_wins: azionRecommendations?.marketing_data?.action_plan
+          ?.filter((action: any) => action.implementation_complexity === 'low' && action.priority === 'high')
+          ?.slice(0, 3)
+          ?.map((action: any) => ({
+            title: action.title,
+            description: action.description,
+            estimated_savings: action.potential_savings,
+            azion_solution: action.recommended_solutions?.[0] || 'Multiple solutions'
+          })) || [],
+          
+        major_improvements: azionRecommendations?.marketing_data?.action_plan
+          ?.filter((action: any) => action.priority === 'high')
+          ?.slice(0, 5)
+          ?.map((action: any) => ({
+            title: action.title,
+            description: action.description,
+            estimated_savings: action.potential_savings,
+            complexity: action.implementation_complexity,
+            azion_solutions: action.recommended_solutions || []
+          })) || [],
+
+        console_errors: azionRecommendations?.marketing_data?.summary?.console_errors?.has_console_errors ? {
+          detected: true,
+          total_errors: azionRecommendations.marketing_data.summary.console_errors.total_console_errors,
+          error_types: azionRecommendations.marketing_data.summary.console_errors.error_types,
+          recommended_solution: "Azion Functions and Firewall for error handling and monitoring"
+        } : {
+          detected: false,
+          message: "No console errors detected"
+        }
+      },
+
+      crux_data: result.crux_data ? {
+        has_real_user_data: result.crux_data.has_crux_data,
+        core_web_vitals_trend: result.crux_data.has_crux_data ? "Available in full analysis" : "No historical data available",
+        recommendation: result.crux_data.has_crux_data 
+          ? "Use /full endpoint for detailed Core Web Vitals trends"
+          : "Consider implementing Azion solutions to improve user experience metrics"
+      } : null,
+
+      next_steps: {
+        immediate_actions: [
+          "Review high-priority issues in the performance_assessment section",
+          "Examine recommended Azion products for your specific use case",
+          "Consider implementing quick wins for immediate performance gains"
+        ],
+        
+        consultation_recommendation: issuesByPriority.high.length > 3 
+          ? "Consider Azion's Best Practices Review service for comprehensive optimization strategy"
+          : "Azion's standard solutions should address most identified issues",
+          
+        api_usage_suggestions: [
+          "Use /analyze endpoint for detailed technical analysis",
+          "Use /report endpoint for shareable HTML performance reports",
+          "Use /full endpoint for complete data including CrUX metrics"
+        ]
       }
     };
 
     return new Response(
-      JSON.stringify(htmlJsonResponse),
+      JSON.stringify(solutionsResponse, null, 2),
       {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -254,14 +389,43 @@ async function handleHtmlJsonEndpoint(analysisRequest: AnalysisRequest, corsHead
     );
 
   } catch (error) {
-    logError('HTML-JSON generation error', error);
+    logError('Solutions endpoint error', error);
     return createErrorResponseObject(
       ErrorCodes.INTERNAL_SERVER_ERROR,
-      ErrorTypes.HTML_JSON_GENERATION_FAILED,
+      ErrorTypes.ANALYSIS_FAILED,
       error instanceof Error ? error.message : undefined,
       corsHeaders
     );
   }
+}
+
+// Helper functions for the solutions endpoint
+function getCategoryForIssue(issueId: string, analysis: any): string {
+  for (const [categoryName, categoryData] of Object.entries(analysis)) {
+    if (categoryData && typeof categoryData === 'object' && 'issues' in categoryData) {
+      const issues = (categoryData as any).issues || [];
+      if (issues.some((issue: any) => issue.id === issueId)) {
+        return categoryName;
+      }
+    }
+  }
+  return 'unknown';
+}
+
+function getImplementationPriority(issuesByPriority: any): string {
+  if (issuesByPriority.high.length > 5) return 'urgent';
+  if (issuesByPriority.high.length > 2) return 'high';
+  if (issuesByPriority.medium.length > 3) return 'medium';
+  return 'low';
+}
+
+function getApplicableIssuesForSolution(solutionId: string, recommendations: any): string[] {
+  if (!recommendations?.recommendations) return [];
+  
+  return recommendations.recommendations
+    .filter((rec: any) => rec.azion_solution?.solutions?.some((sol: any) => sol.id === solutionId))
+    .map((rec: any) => rec.issue?.id)
+    .filter((id: string) => id) || [];
 }
 
 function handleDocsEndpoint(corsHeaders: Record<string, string>): Response {
@@ -277,7 +441,7 @@ function handleDocsEndpoint(corsHeaders: Record<string, string>): Response {
       },
       '/analyze': {
         method: 'POST',
-        description: 'Analyze website performance and get JSON response',
+        description: 'Analyze website performance and get JSON response (analysis data only, no HTML report)',
         body: {
           url: 'string (required)',
           device: 'mobile | desktop | tablet (default: mobile)',
@@ -293,13 +457,21 @@ function handleDocsEndpoint(corsHeaders: Record<string, string>): Response {
       },
       '/full': {
         method: 'POST',
-        description: 'Get complete analysis with both JSON and HTML report',
+        description: 'Get complete analysis with both JSON data and HTML report included',
         body: 'Same as /analyze'
       },
-      '/html-json': {
+      '/solutions': {
         method: 'POST',
-        description: 'Get HTML report data in JSON format with additional metadata',
-        body: 'Same as /analyze'
+        description: 'Get structured Azion solutions and optimization insights in JSON format optimized for LLMs and tools',
+        body: 'Same as /analyze',
+        response_features: [
+          'Performance assessment with categorized issues',
+          'Recommended Azion products with applicable use cases',
+          'Implementation roadmap with priority and complexity',
+          'Quick wins and major improvement opportunities',
+          'Console error analysis and recommendations',
+          'Next steps and consultation guidance'
+        ]
       },
       '/manual': {
         method: 'GET',

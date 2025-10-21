@@ -20,11 +20,6 @@ export function logError(context: string, error: unknown): void {
   console.error(`${context}:`, error);
 }
 
-// Express.js error response helpers
-export function sendErrorResponse(res: any, status: number, error: string, errorOrMessage?: unknown): void {
-  const errorMessage = typeof errorOrMessage === 'string' ? errorOrMessage : getErrorMessage(errorOrMessage);
-  res.status(status).json(createErrorResponse(error, errorMessage));
-}
 
 // Edge Function error response helpers
 export function createErrorResponseObject(
@@ -48,7 +43,6 @@ export const ErrorTypes = {
   ANALYSIS_FAILED: 'Analysis failed',
   REPORT_GENERATION_FAILED: 'Report generation failed',
   FULL_ANALYSIS_FAILED: 'Full analysis failed',
-  HTML_JSON_GENERATION_FAILED: 'HTML-JSON generation failed',
   VALIDATION_FAILED: 'Validation failed',
   INTERNAL_SERVER_ERROR: 'Internal server error',
   INVALID_JSON: 'Invalid JSON in request body',

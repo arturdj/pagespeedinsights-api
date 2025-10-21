@@ -1,12 +1,12 @@
 #!/bin/bash
 
-# Azion PageSpeed Analyzer - TypeScript Edition
-# Startup script for easy deployment
+# Azion PageSpeed Analyzer - Edge Function
+# Startup script for Azion Edge Function development
 
 set -e
 
-echo "🚀 Starting Azion PageSpeed Analyzer - TypeScript Edition"
-echo "=================================================="
+echo "🚀 Starting Azion PageSpeed Analyzer - Edge Function"
+echo "================================================"
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -39,26 +39,23 @@ else
     echo "✅ Dependencies already installed"
 fi
 
-# Build the project
-echo "🔨 Building TypeScript project..."
-npm run build
-
-# Check if build was successful
-if [ ! -d "dist" ]; then
-    echo "❌ Build failed. Please check for TypeScript errors."
+# Check if Azion CLI is installed
+if ! command -v azion &> /dev/null; then
+    echo "❌ Azion CLI is not installed. Please install it first:"
+    echo "   npm install -g azion"
     exit 1
 fi
 
-echo "✅ Build completed successfully"
+echo "✅ Azion CLI is available"
 
-# Start the server
-echo "🌟 Starting server..."
+# Start Azion development server
+echo "🌟 Starting Azion Edge Function development server..."
 echo ""
-echo "📖 Documentation: http://localhost:3000/docs"
-echo "🔧 Manual Interface: http://localhost:3000/manual"
-echo "❤️ Health Check: http://localhost:3000/health"
+echo "📖 Documentation: http://localhost:3333/docs"
+echo "🔧 Manual Interface: http://localhost:3333/manual"
+echo "❤️ Health Check: http://localhost:3333/health"
 echo ""
-echo "Press Ctrl+C to stop the server"
+echo "Press Ctrl+C to stop the development server"
 echo ""
 
-npm start
+npm run dev
